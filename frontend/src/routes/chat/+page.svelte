@@ -5,7 +5,7 @@
 	import { marked } from 'marked';
 
 	function renderMarkdown(text: string): string {
-		return marked.parse(text) as string;
+		return marked.parse(text, { breaks: true }) as string;
 	}
 
 	interface ChatEntry {
@@ -54,6 +54,7 @@
 					scrollToBottom();
 				},
 				(sources) => {
+					console.log('[stream done] raw answer:\n', entries[idx].content);
 					entries[idx].sources = sources;
 					entries[idx].streaming = false;
 				},
@@ -176,9 +177,9 @@
 							style={entry.role === 'user' ? 'background-color: #1a3557;' : ''}>
 							{#if entry.role === 'assistant'}
 								{#if entry.streaming}
-									<span class="whitespace-pre-wrap">{entry.content}</span><span class="inline-block w-0.5 h-4 ml-0.5 align-middle animate-pulse" style="background-color: #c9a84c;"></span>
+									<div class="markdown-body">{@html renderMarkdown(entry.content)}<span class="inline-block w-0.5 h-4 ml-0.5 align-middle animate-pulse" style="background-color: #c9a84c;"></span></div>
 								{:else}
-									{@html renderMarkdown(entry.content)}
+									<div class="markdown-body">{@html renderMarkdown(entry.content)}</div>
 								{/if}
 							{:else}
 								{entry.content}
@@ -259,3 +260,25 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	.markdown-body :global(ol) {
+		list-style-type: decimal;
+		padding-left: 1.25rem;
+		margin: 0.25rem 0;
+	}
+	.markdown-body :global(ul) {
+		list-style-type: disc;
+		padding-left: 1.25rem;
+		margin: 0.25rem 0;
+	}
+	.markdown-body :global(li) {
+		margin: 0.15rem 0;
+	}
+	.markdown-body :global(p) {
+		margin: 0.25rem 0;
+	}
+	.markdown-body :global(strong) {
+		font-weight: 600;
+	}
+</style>

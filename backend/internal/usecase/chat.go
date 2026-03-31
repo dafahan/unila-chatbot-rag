@@ -102,13 +102,15 @@ func (uc *ChatUseCase) AnswerStream(ctx context.Context, req domain.ChatRequest,
 	return chunks, nil
 }
 
-var promptLang = map[string][6]string{
+var promptLang = map[string][8]string{
 	"en": {
 		"You are an academic assistant for Universitas Lampung (UNILA).",
 		"Answer DIRECTLY and COMPLETELY based on the document context below.",
 		"- Go straight to the answer, NO opening remarks whatsoever.",
+		"- When describing a UI action (click, menu, button), ALWAYS state which menu or page it is located on.",
 		"- NEVER mention file names, document names, or example numbers in your answer.",
 		"- NEVER write 'According to the document...' or similar phrases.",
+		"- NEVER reference images, figures, tables, or screenshots (e.g. 'as shown in the image below') — you cannot display them.",
 		"- If information is unavailable, answer ONLY: 'This information is not available. Please contact the UPT Admin.'",
 	},
 	"id": {
@@ -117,6 +119,8 @@ var promptLang = map[string][6]string{
 		"- Langsung ke isi jawaban, TANPA kalimat pembuka apapun.",
 		"- DILARANG menyebut nama file, nama dokumen, atau nomor contoh dalam jawaban.",
 		"- DILARANG menulis 'Menurut panduan...', 'Berdasarkan dokumen...', atau sejenisnya.",
+		"- DILARANG menyebut gambar, foto, tabel, atau tangkapan layar (contoh: 'seperti gambar berikut') — kamu tidak bisa menampilkannya.",
+		"- Saat menjelaskan aksi di UI (klik, menu, tombol), SELALU sebutkan di menu atau halaman mana aksi tersebut berada.",
 		"- Jika informasi tidak tersedia, jawab HANYA: 'Informasi ini tidak tersedia. Silakan hubungi Admin UPT.'",
 	},
 }
@@ -129,8 +133,8 @@ func buildPrompt(req domain.ChatRequest, chunks []domain.Chunk) string {
 	p := promptLang[lang]
 
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "%s %s\nSTRICT RULES:\n%s\n%s\n%s\n%s\n- Use bullet points or numbering if listing items.\n- ALWAYS respond in the selected language (%s).\n\n",
-		p[0], p[1], p[2], p[3], p[4], p[5], lang)
+	fmt.Fprintf(&sb, "%s %s\nSTRICT RULES:\n%s\n%s\n%s\n%s\n%s\n%s\n- Use bullet points or numbering if listing items.\n- ALWAYS respond in the selected language (%s).\n\n",
+		p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], lang)
 
 	if len(chunks) > 0 {
 		sb.WriteString("=== CONTEXT ===\n")

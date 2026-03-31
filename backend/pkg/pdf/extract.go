@@ -3,8 +3,11 @@ package pdf
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"os/exec"
 	"regexp"
 	"strings"
+	"unicode"
 
 	"github.com/ledongthuc/pdf"
 )
@@ -20,9 +23,22 @@ type PageText struct {
 	Text string
 }
 
-// ExtractPages extracts text page-by-page, removes statistical boilerplate,
-// and returns one PageText per page. Page numbers are 1-indexed.
+// ExtractPages extracts text page-by-page with boilerplate removal.
+// If the native Go extractor produces mostly garbage (non-printable chars),
+// it falls back to pdftotext (poppler-utils) for the entire document,
+// returning everything as a single page.
 func ExtractPages(data []byte) ([]PageText, error) {
+	pages, err := extractNative(data)
+	if err == nil && !isGarbage(pages) {
+		return pages, nil
+	}
+
+	// Fallback: pdftotext
+	return extractPdftotext(data)
+}
+
+// extractNative uses ledongthuc/pdf to extract text per page.
+func extractNative(data []byte) ([]PageText, error) {
 	r, err := pdf.NewReader(bytes.NewReader(data), int64(len(data)))
 	if err != nil {
 		return nil, fmt.Errorf("pdf reader: %w", err)
@@ -35,11 +51,7 @@ func ExtractPages(data []byte) ([]PageText, error) {
 			raw = append(raw, "")
 			continue
 		}
-		text, err := page.GetPlainText(nil)
-		if err != nil {
-			raw = append(raw, "")
-			continue
-		}
+		text, _ := page.GetPlainText(nil)
 		raw = append(raw, text)
 	}
 
@@ -47,6 +59,71 @@ func ExtractPages(data []byte) ([]PageText, error) {
 
 	result := make([]PageText, 0, len(raw))
 	for i, pageText := range raw {
+		var buf bytes.Buffer
+		for _, line := range strings.Split(pageText, "\n") {
+			normalized := strings.TrimSpace(line)
+			if boilerplate[normalized] {
+				continue
+			}
+			buf.WriteString(line)
+			buf.WriteByte('\n')
+		}
+		cleaned := cleanText(buf.String())
+		if cleaned != "" {
+			result = append(result, PageText{Page: i + 1, Text: cleaned})
+		}
+	}
+	return result, nil
+}
+
+// isGarbage returns true if extracted pages are mostly non-printable/non-Latin
+// characters — a sign of encoding issues in the PDF.
+func isGarbage(pages []PageText) bool {
+	if len(pages) == 0 {
+		return true
+	}
+	var total, bad int
+	for _, p := range pages {
+		for _, r := range p.Text {
+			total++
+			if r > 127 && !unicode.IsLetter(r) && !unicode.IsSpace(r) {
+				bad++
+			}
+		}
+	}
+	if total == 0 {
+		return true
+	}
+	return float64(bad)/float64(total) > 0.15
+}
+
+// extractPdftotext uses the system pdftotext binary (poppler-utils) as fallback.
+// All pages are returned as a single PageText since pdftotext doesn't expose
+// per-page boundaries easily without -f/-l flags.
+func extractPdftotext(data []byte) ([]PageText, error) {
+	tmp, err := os.CreateTemp("", "unila-pdf-*.pdf")
+	if err != nil {
+		return nil, fmt.Errorf("pdftotext tmp: %w", err)
+	}
+	defer os.Remove(tmp.Name())
+
+	if _, err := tmp.Write(data); err != nil {
+		tmp.Close()
+		return nil, err
+	}
+	tmp.Close()
+
+	out, err := exec.Command("pdftotext", "-layout", tmp.Name(), "-").Output()
+	if err != nil {
+		return nil, fmt.Errorf("pdftotext: %w", err)
+	}
+
+	// Split on form-feed character (\f) which pdftotext uses as page separator
+	rawPages := strings.Split(string(out), "\f")
+	boilerplate := detectBoilerplate(rawPages, 0.30)
+
+	result := make([]PageText, 0, len(rawPages))
+	for i, pageText := range rawPages {
 		var buf bytes.Buffer
 		for _, line := range strings.Split(pageText, "\n") {
 			normalized := strings.TrimSpace(line)

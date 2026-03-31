@@ -52,7 +52,7 @@ func Load() *Config {
 		ChunkSize:      getEnvInt("CHUNK_SIZE", 512),
 		ChunkOverlap:   getEnvInt("CHUNK_OVERLAP", 64),
 		TopK:           getEnvInt("TOP_K", 5),
-		ScoreThreshold: getEnvFloat("SCORE_THRESHOLD", 0.03),
+		ScoreThreshold: getEnvFloat("SCORE_THRESHOLD", 0.02),
 	}
 }
 
