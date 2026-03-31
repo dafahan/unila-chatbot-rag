@@ -133,7 +133,7 @@ func (r *QdrantRepository) SaveChunks(chunks []domain.Chunk) error {
 // similarity via cosine) and the BM25 sparse vector (lexical relevance via
 // dot product) are used as independent retrieval signals whose ranked lists
 // are merged by RRF. Falls back to dense-only if no sparse vector is provided.
-func (r *QdrantRepository) SearchSimilar(denseVec []float32, sparseIndices []uint32, sparseValues []float32, topK int) ([]domain.Chunk, error) {
+func (r *QdrantRepository) SearchSimilar(denseVec []float32, sparseIndices []uint32, sparseValues []float32, topK int, scoreThreshold float32) ([]domain.Chunk, error) {
 	ctx := context.Background()
 	candidateLimit := uint64(topK * 4)
 	if candidateLimit < 20 {
@@ -175,10 +175,6 @@ func (r *QdrantRepository) SearchSimilar(denseVec []float32, sparseIndices []uin
 		})
 	}
 
-	// ScoreThreshold on RRF score: RRF scores are typically 0.01–0.1.
-	// 0.02 filters out chunks with near-zero relevance to the query.
-	rrfThreshold := float32(0.02)
-
 	resp, err := r.client.Query(ctx, &pb.QueryPoints{
 		CollectionName: r.collection,
 		Prefetch:       prefetches,
@@ -188,7 +184,7 @@ func (r *QdrantRepository) SearchSimilar(denseVec []float32, sparseIndices []uin
 			},
 		},
 		Limit:          uint64Ptr(uint64(topK)),
-		ScoreThreshold: &rrfThreshold,
+		ScoreThreshold: &scoreThreshold,
 		WithPayload: &pb.WithPayloadSelector{
 			SelectorOptions: &pb.WithPayloadSelector_Enable{Enable: true},
 		},

@@ -24,9 +24,10 @@ type Config struct {
 	QdrantPort       int
 	QdrantCollection string
 
-	ChunkSize    int
-	ChunkOverlap int
-	TopK         int
+	ChunkSize      int
+	ChunkOverlap   int
+	TopK           int
+	ScoreThreshold float64
 }
 
 func Load() *Config {
@@ -48,9 +49,10 @@ func Load() *Config {
 		QdrantPort:       getEnvInt("QDRANT_PORT", 6334),
 		QdrantCollection: getEnv("QDRANT_COLLECTION", "unila_docs"),
 
-		ChunkSize:    getEnvInt("CHUNK_SIZE", 512),
-		ChunkOverlap: getEnvInt("CHUNK_OVERLAP", 64),
-		TopK:         getEnvInt("TOP_K", 5),
+		ChunkSize:      getEnvInt("CHUNK_SIZE", 512),
+		ChunkOverlap:   getEnvInt("CHUNK_OVERLAP", 64),
+		TopK:           getEnvInt("TOP_K", 5),
+		ScoreThreshold: getEnvFloat("SCORE_THRESHOLD", 0.03),
 	}
 }
 
@@ -59,6 +61,19 @@ func getEnv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+func getEnvFloat(key string, fallback float64) float64 {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	f, err := strconv.ParseFloat(v, 64)
+	if err != nil {
+		log.Printf("warn: invalid float for %s, using default %v", key, fallback)
+		return fallback
+	}
+	return f
 }
 
 func getEnvInt(key string, fallback int) int {

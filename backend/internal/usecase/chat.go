@@ -43,7 +43,7 @@ func (uc *ChatUseCase) Answer(ctx context.Context, req domain.ChatRequest) (*dom
 	sparseIdx, sparseVal := uc.bm25.VectorizeQuery(retrievalQuery)
 
 	// 3. Hybrid retrieval: dense + sparse via Qdrant RRF fusion
-	chunks, err := uc.repo.SearchSimilar(queryVec, sparseIdx, sparseVal, uc.cfg.TopK)
+	chunks, err := uc.repo.SearchSimilar(queryVec, sparseIdx, sparseVal, uc.cfg.TopK, float32(uc.cfg.ScoreThreshold))
 	if err != nil {
 		return nil, fmt.Errorf("search: %w", err)
 	}
@@ -90,7 +90,7 @@ func (uc *ChatUseCase) AnswerStream(ctx context.Context, req domain.ChatRequest,
 	}
 
 	sparseIdx, sparseVal := uc.bm25.VectorizeQuery(retrievalQuery)
-	chunks, err := uc.repo.SearchSimilar(queryVec, sparseIdx, sparseVal, uc.cfg.TopK)
+	chunks, err := uc.repo.SearchSimilar(queryVec, sparseIdx, sparseVal, uc.cfg.TopK, float32(uc.cfg.ScoreThreshold))
 	if err != nil {
 		return nil, fmt.Errorf("search: %w", err)
 	}

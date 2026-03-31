@@ -21,7 +21,7 @@ type DocumentInfo struct {
 // DocumentRepository handles persistence of document chunks and vectors.
 type DocumentRepository interface {
 	SaveChunks(chunks []Chunk) error
-	SearchSimilar(denseVec []float32, sparseIndices []uint32, sparseValues []float32, topK int) ([]Chunk, error)
+	SearchSimilar(denseVec []float32, sparseIndices []uint32, sparseValues []float32, topK int, scoreThreshold float32) ([]Chunk, error)
 	CollectionExists() (bool, error)
 	CreateCollection(dimension int) error
 	ListDocuments() ([]DocumentInfo, error)
