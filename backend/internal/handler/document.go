@@ -49,13 +49,13 @@ func (h *DocumentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	text, err := pdfextract.ExtractText(raw)
+	pages, err := pdfextract.ExtractPages(raw)
 	if err != nil {
 		writeError(w, http.StatusUnprocessableEntity, fmt.Sprintf("pdf extract: %v", err))
 		return
 	}
 
-	count, err := h.uc.IngestText(r.Context(), header.Filename, text)
+	count, err := h.uc.IngestPages(r.Context(), header.Filename, pages)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

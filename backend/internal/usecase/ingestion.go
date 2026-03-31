@@ -11,6 +11,7 @@ import (
 	"github.com/dafahan/unila-ai/internal/domain"
 	"github.com/dafahan/unila-ai/pkg/bm25"
 	"github.com/dafahan/unila-ai/pkg/config"
+	pdfextract "github.com/dafahan/unila-ai/pkg/pdf"
 )
 
 type IngestionUseCase struct {
@@ -22,6 +23,95 @@ type IngestionUseCase struct {
 
 func NewIngestionUseCase(llm domain.LLMProvider, repo domain.DocumentRepository, cfg *config.Config, bm25Idx *bm25.Index) *IngestionUseCase {
 	return &IngestionUseCase{llm: llm, repo: repo, cfg: cfg, bm25: bm25Idx}
+}
+
+// IngestPages ingests a PDF that has already been split into pages (with page numbers).
+// Each page is chunked independently so that chunk.PageNumber is accurate.
+func (uc *IngestionUseCase) IngestPages(ctx context.Context, filename string, pages []pdfextract.PageText) (int, error) {
+	if err := uc.ensureCollection(ctx); err != nil {
+		return 0, err
+	}
+
+	// Build flat list of (text, pageNum) pairs after chunking per page
+	type rawChunk struct {
+		text string
+		page int
+	}
+	var raws []rawChunk
+	for _, p := range pages {
+		for _, chunk := range splitIntoChunks(p.Text, uc.cfg.ChunkSize, uc.cfg.ChunkOverlap) {
+			raws = append(raws, rawChunk{text: chunk, page: p.Page})
+		}
+	}
+
+	// Deduplicate on text only
+	texts := make([]string, len(raws))
+	for i, r := range raws {
+		texts[i] = r.text
+	}
+	kept := deduplicateChunksIndexed(texts)
+	dedupedRaws := make([]rawChunk, 0, len(kept))
+	for _, i := range kept {
+		dedupedRaws = append(dedupedRaws, raws[i])
+	}
+
+	// Update BM25 corpus stats
+	dedupedTexts := make([]string, len(dedupedRaws))
+	for i, r := range dedupedRaws {
+		dedupedTexts[i] = r.text
+	}
+	uc.bm25.AddChunks(dedupedTexts)
+	if err := uc.bm25.Save(); err != nil {
+		fmt.Printf("warn: failed to save BM25 stats: %v\n", err)
+	}
+
+	docID := uuid.New().String()
+	chunks := make([]domain.Chunk, len(dedupedRaws))
+	errCh := make(chan error, 1)
+
+	const workers = 4
+	sem := make(chan struct{}, workers)
+	var wg sync.WaitGroup
+
+	for i, raw := range dedupedRaws {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(i int, text string, page int) {
+			defer wg.Done()
+			defer func() { <-sem }()
+
+			vec, err := uc.llm.GenerateEmbedding(ctx, text)
+			if err != nil {
+				select {
+				case errCh <- fmt.Errorf("embed chunk %d: %w", i, err):
+				default:
+				}
+				return
+			}
+			sparseIdx, sparseVal := uc.bm25.VectorizeDoc(text)
+			chunks[i] = domain.Chunk{
+				ID:            uuid.New().String(),
+				DocumentID:    docID,
+				Filename:      filename,
+				Text:          text,
+				PageNumber:    page,
+				Vector:        vec,
+				SparseIndices: sparseIdx,
+				SparseValues:  sparseVal,
+			}
+		}(i, raw.text, raw.page)
+	}
+
+	wg.Wait()
+	close(errCh)
+	if err := <-errCh; err != nil {
+		return 0, err
+	}
+
+	if err := uc.repo.SaveChunks(chunks); err != nil {
+		return 0, fmt.Errorf("save chunks: %w", err)
+	}
+	return len(chunks), nil
 }
 
 // IngestText splits text into chunks, computes dense + BM25 sparse vectors, and saves to Qdrant.
@@ -104,6 +194,31 @@ func (uc *IngestionUseCase) ensureCollection(ctx context.Context) error {
 
 // deduplicateChunks removes chunks that are too similar to previously seen ones
 // using Jaccard similarity on word sets (threshold 0.75).
+// deduplicateChunksIndexed returns the indices of non-duplicate chunks.
+func deduplicateChunksIndexed(chunks []string) []int {
+	seen := make([]map[string]struct{}, 0, len(chunks))
+	var result []int
+	for i, chunk := range chunks {
+		words := strings.Fields(strings.ToLower(chunk))
+		wordSet := make(map[string]struct{}, len(words))
+		for _, w := range words {
+			wordSet[w] = struct{}{}
+		}
+		duplicate := false
+		for _, prev := range seen {
+			if jaccardSimilarity(wordSet, prev) > 0.75 {
+				duplicate = true
+				break
+			}
+		}
+		if !duplicate {
+			seen = append(seen, wordSet)
+			result = append(result, i)
+		}
+	}
+	return result
+}
+
 func deduplicateChunks(chunks []string) []string {
 	seen := make([]map[string]struct{}, 0, len(chunks))
 	result := make([]string, 0, len(chunks))

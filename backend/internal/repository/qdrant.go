@@ -175,6 +175,10 @@ func (r *QdrantRepository) SearchSimilar(denseVec []float32, sparseIndices []uin
 		})
 	}
 
+	// ScoreThreshold on RRF score: RRF scores are typically 0.01–0.1.
+	// 0.02 filters out chunks with near-zero relevance to the query.
+	rrfThreshold := float32(0.02)
+
 	resp, err := r.client.Query(ctx, &pb.QueryPoints{
 		CollectionName: r.collection,
 		Prefetch:       prefetches,
@@ -183,7 +187,8 @@ func (r *QdrantRepository) SearchSimilar(denseVec []float32, sparseIndices []uin
 				Fusion: pb.Fusion_RRF,
 			},
 		},
-		Limit: uint64Ptr(uint64(topK)),
+		Limit:          uint64Ptr(uint64(topK)),
+		ScoreThreshold: &rrfThreshold,
 		WithPayload: &pb.WithPayloadSelector{
 			SelectorOptions: &pb.WithPayloadSelector_Enable{Enable: true},
 		},
