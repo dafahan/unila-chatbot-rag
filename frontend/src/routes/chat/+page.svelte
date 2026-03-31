@@ -54,7 +54,6 @@
 					scrollToBottom();
 				},
 				(sources) => {
-					console.log('[stream done] raw answer:\n', entries[idx].content);
 					entries[idx].sources = sources;
 					entries[idx].streaming = false;
 				},
@@ -90,10 +89,23 @@
 	}
 
 	function uniqueSources(sources: ChatEntry['sources']) {
-		if (!sources) return [];
+		if (!sources || sources.length === 0) return [];
+
+		// Count how many chunks each filename contributes
+		const freq: Record<string, number> = {};
+		for (const s of sources) {
+			freq[s.filename] = (freq[s.filename] ?? 0) + 1;
+		}
+
+		// Only keep filenames that account for >= 50% of chunks,
+		// or if no single file reaches 50%, keep the top-1 only.
+		const total = sources.length;
+		const majority = Object.entries(freq).filter(([, c]) => c / total >= 0.5).map(([f]) => f);
+		const allowed = new Set(majority.length > 0 ? majority : [Object.entries(freq).sort((a, b) => b[1] - a[1])[0][0]]);
+
 		const seen = new Set<string>();
 		return sources.filter(s => {
-			if (seen.has(s.filename)) return false;
+			if (!allowed.has(s.filename) || seen.has(s.filename)) return false;
 			seen.add(s.filename);
 			return true;
 		});
@@ -187,7 +199,7 @@
 						</div>
 
 						<!-- Source links -->
-						{#if entry.role === 'assistant' && uniqueSources(entry.sources).length > 0}
+						{#if entry.role === 'assistant' && uniqueSources(entry.sources).length > 0 && !entry.content.includes('tidak tersedia') && !entry.content.includes('not available')}
 							<div class="mt-2 flex flex-wrap gap-2">
 								{#each uniqueSources(entry.sources) as src}
 									<a
