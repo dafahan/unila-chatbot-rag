@@ -145,7 +145,42 @@ Jika tidak ada *chunk* yang relevan ditemukan, sistem mengembalikan respons stan
 
 Ini mencegah model **mengarang jawaban** (*hallucination*) yang dapat menyesatkan mahasiswa.
 
-## 4.6 Dukungan Dua LLM Provider
+## 4.6 Streaming Response (Server-Sent Events)
+
+Sistem mendukung streaming respons LLM token per token menggunakan **Server-Sent Events (SSE)**. Ini meningkatkan *perceived performance* secara signifikan karena pengguna langsung melihat teks muncul tanpa menunggu seluruh respons selesai dihasilkan.
+
+### Alur Streaming
+
+```
+Frontend                          Backend (SSE)
+   │                                    │
+   ├──POST /api/chat/stream ──────────→ │
+   │                                    │ translate query (jika EN)
+   │                                    │ embed + BM25 retrieval
+   │                                    │ build prompt
+   │                                    │ LLM generate (stream=true)
+   │ ←── data: {"token":"Syarat"} ───── │
+   │ ←── data: {"token":" cuti"} ────── │
+   │ ←── data: {"token":"..."} ──────── │  (token per token)
+   │ ←── data: {"done":true,"sources":[...]} ─ │
+   │                                    │
+```
+
+### Format Event SSE
+
+| Event | Format |
+|---|---|
+| Token | `data: {"token": "teks"}` |
+| Selesai + sumber | `data: {"done": true, "sources": [...]}` |
+| Error | `data: {"error": "pesan error"}` |
+
+### Perilaku Frontend
+
+- Selama streaming: teks ditampilkan mentah (plain text) dengan kursor berkedip
+- Setelah `done` diterima: teks di-render sebagai Markdown (bold, bullet, dll.)
+- Loading dots hanya muncul saat fase retrieval (sebelum token pertama tiba)
+
+## 4.8 Dukungan Dua LLM Provider
 
 Sistem mengimplementasikan antarmuka `LLMProvider` yang memungkinkan pertukaran provider tanpa mengubah logika bisnis (*Strategy Pattern*):
 

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/dafahan/unila-ai/internal/domain"
+	"github.com/dafahan/unila-ai/pkg/bm25"
 	"github.com/dafahan/unila-ai/pkg/config"
 )
 
@@ -13,30 +14,44 @@ type ChatUseCase struct {
 	llm  domain.LLMProvider
 	repo domain.DocumentRepository
 	cfg  *config.Config
+	bm25 *bm25.Index
 }
 
-func NewChatUseCase(llm domain.LLMProvider, repo domain.DocumentRepository, cfg *config.Config) *ChatUseCase {
-	return &ChatUseCase{llm: llm, repo: repo, cfg: cfg}
+func NewChatUseCase(llm domain.LLMProvider, repo domain.DocumentRepository, cfg *config.Config, bm25Idx *bm25.Index) *ChatUseCase {
+	return &ChatUseCase{llm: llm, repo: repo, cfg: cfg, bm25: bm25Idx}
 }
 
 func (uc *ChatUseCase) Answer(ctx context.Context, req domain.ChatRequest) (*domain.ChatResponse, error) {
-	// 1. Embed the query
-	queryVec, err := uc.llm.GenerateEmbedding(ctx, req.Query)
+	// For English queries, translate to Indonesian before retrieval so that
+	// both dense embeddings and BM25 match against the Indonesian document corpus.
+	// The original English query is still used in the prompt so the LLM answers in English.
+	retrievalQuery := req.Query
+	if req.Language == "en" {
+		if translated, err := uc.translateToID(ctx, req.Query); err == nil && translated != "" {
+			retrievalQuery = translated
+		}
+		// On failure, fall back to original query (dense-only retrieval, BM25 silent).
+	}
+
+	// 1. Embed the retrieval query (dense vector)
+	queryVec, err := uc.llm.GenerateEmbedding(ctx, retrievalQuery)
 	if err != nil {
 		return nil, fmt.Errorf("embed query: %w", err)
 	}
 
-	// 2. Retrieve top-K relevant chunks (hybrid: vector + keyword boost)
-	keywords := extractKeywords(req.Query)
-	chunks, err := uc.repo.SearchSimilar(queryVec, keywords, uc.cfg.TopK)
+	// 2. Compute BM25 sparse query vector (lexical signal)
+	sparseIdx, sparseVal := uc.bm25.VectorizeQuery(retrievalQuery)
+
+	// 3. Hybrid retrieval: dense + sparse via Qdrant RRF fusion
+	chunks, err := uc.repo.SearchSimilar(queryVec, sparseIdx, sparseVal, uc.cfg.TopK)
 	if err != nil {
 		return nil, fmt.Errorf("search: %w", err)
 	}
 
-	// 3. Build prompt
+	// 4. Build prompt using the original query (user sees their own language)
 	prompt := buildPrompt(req, chunks)
 
-	// 4. Generate answer
+	// 5. Generate answer
 	answer, err := uc.llm.GenerateCompletion(ctx, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("generate: %w", err)
@@ -48,24 +63,43 @@ func (uc *ChatUseCase) Answer(ctx context.Context, req domain.ChatRequest) (*dom
 	}, nil
 }
 
-// extractKeywords returns meaningful words from query (skip stopwords).
-func extractKeywords(query string) []string {
-	stopwords := map[string]bool{
-		"apa": true, "yang": true, "di": true, "ke": true, "dari": true,
-		"dan": true, "untuk": true, "dengan": true, "ini": true, "itu": true,
-		"adalah": true, "bagaimana": true, "cara": true, "tentang": true,
-		"pada": true, "dalam": true, "atau": true, "juga": true, "ada": true,
-		"tidak": true, "bisa": true, "saya": true, "kamu": true, "gua": true,
+// translateToID translates an English query to Bahasa Indonesia using the
+// configured LLM. The result is used only for retrieval — not shown to the user.
+func (uc *ChatUseCase) translateToID(ctx context.Context, query string) (string, error) {
+	prompt := "Translate the following question to Bahasa Indonesia. Return ONLY the translation, no explanation, no punctuation changes.\n\nQuestion: " + query + "\n\nTranslation:"
+	result, err := uc.llm.GenerateCompletion(ctx, prompt)
+	if err != nil {
+		return "", err
 	}
+	return strings.TrimSpace(result), nil
+}
 
-	words := strings.Fields(strings.ToLower(query))
-	var keywords []string
-	for _, w := range words {
-		if len(w) > 3 && !stopwords[w] {
-			keywords = append(keywords, w)
+// AnswerStream runs the full RAG pipeline and streams LLM tokens to onToken.
+// Returns the retrieved source chunks after streaming completes.
+func (uc *ChatUseCase) AnswerStream(ctx context.Context, req domain.ChatRequest, onToken func(string)) ([]domain.Chunk, error) {
+	retrievalQuery := req.Query
+	if req.Language == "en" {
+		if translated, err := uc.translateToID(ctx, req.Query); err == nil && translated != "" {
+			retrievalQuery = translated
 		}
 	}
-	return keywords
+
+	queryVec, err := uc.llm.GenerateEmbedding(ctx, retrievalQuery)
+	if err != nil {
+		return nil, fmt.Errorf("embed query: %w", err)
+	}
+
+	sparseIdx, sparseVal := uc.bm25.VectorizeQuery(retrievalQuery)
+	chunks, err := uc.repo.SearchSimilar(queryVec, sparseIdx, sparseVal, uc.cfg.TopK)
+	if err != nil {
+		return nil, fmt.Errorf("search: %w", err)
+	}
+
+	prompt := buildPrompt(req, chunks)
+	if err := uc.llm.GenerateCompletionStream(ctx, prompt, onToken); err != nil {
+		return nil, fmt.Errorf("stream: %w", err)
+	}
+	return chunks, nil
 }
 
 var promptLang = map[string][6]string{
@@ -89,8 +123,8 @@ var promptLang = map[string][6]string{
 
 func buildPrompt(req domain.ChatRequest, chunks []domain.Chunk) string {
 	lang := req.Language
-	if lang != "id" {
-		lang = "en" // default English
+	if lang != "en" {
+		lang = "id"
 	}
 	p := promptLang[lang]
 

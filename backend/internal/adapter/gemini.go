@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/generative-ai-go/genai"
+	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 )
 
@@ -52,6 +53,28 @@ func (g *GeminiAdapter) GenerateEmbedding(ctx context.Context, text string) ([]f
 		return nil, fmt.Errorf("gemini embed: %w", err)
 	}
 	return res.Embedding.Values, nil
+}
+
+func (g *GeminiAdapter) GenerateCompletionStream(ctx context.Context, prompt string, onToken func(string)) error {
+	m := g.client.GenerativeModel(g.model)
+	iter := m.GenerateContentStream(ctx, genai.Text(prompt))
+	for {
+		resp, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("gemini stream: %w", err)
+		}
+		for _, cand := range resp.Candidates {
+			for _, part := range cand.Content.Parts {
+				if text, ok := part.(genai.Text); ok {
+					onToken(string(text))
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func (g *GeminiAdapter) EmbeddingDimension() int {

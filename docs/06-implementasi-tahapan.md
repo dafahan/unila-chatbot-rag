@@ -107,7 +107,21 @@ Sub-tahapan yang telah diimplementasikan:
 | Kirim `language` field ke backend | `src/lib/api.ts` | ✅ |
 | Prompt LLM sesuai bahasa (backend) | `usecase/chat.go` | ✅ |
 
-## 6.9 Tantangan dan Solusi
+## 6.9 Tahap 9: Streaming Response
+
+**Status: Selesai**
+
+| Sub-tahap | Implementasi | Status |
+|---|---|---|
+| `GenerateCompletionStream()` di `LLMProvider` interface | `domain/llm.go` | ✅ |
+| Streaming via Ollama NDJSON (`stream: true`) | `adapter/ollama.go` | ✅ |
+| Streaming via Gemini `GenerateContentStream` | `adapter/gemini.go` | ✅ |
+| `AnswerStream()` di ChatUseCase | `usecase/chat.go` | ✅ |
+| Endpoint `POST /api/chat/stream` (SSE) | `handler/chat.go` | ✅ |
+| Frontend fetch + ReadableStream parser | `src/lib/api.ts` | ✅ |
+| UI: kursor berkedip saat streaming, Markdown saat done | `routes/chat/+page.svelte` | ✅ |
+
+## 6.10 Tantangan dan Solusi
 
 | Tantangan | Solusi yang Diterapkan |
 |---|---|
@@ -122,12 +136,12 @@ Sub-tahapan yang telah diimplementasikan:
 | LLM menjawab "Contoh 1-2" (nomor artifak) | Instruksi larang sebut nomor contoh |
 | Jawaban non-deterministik | Turunkan temperature ke 0.3 (dari 0.1 yang terlalu kaku) |
 
-## 6.10 Yang Belum Diimplementasikan (Pengembangan Lanjutan)
+## 6.11 Yang Belum Diimplementasikan (Pengembangan Lanjutan)
 
 | Fitur | Keterangan |
 |---|---|
 | Autentikasi admin | Panel admin saat ini terbuka tanpa login |
-| Streaming response | LLM saat ini non-streaming (response sekaligus) |
+| ~~Streaming response~~ | Sudah diimplementasikan (SSE, token per token) |
 | Tracking nomor halaman PDF akurat | Saat ini nomor halaman bergantung pada data dari model embedding |
 | Evaluasi kuantitatif (RAGAS) | Pengukuran precision/recall/faithfulness sistem RAG |
 | Cross-encoder reranker | Reranking berbasis model ML untuk akurasi lebih tinggi |

@@ -9,20 +9,22 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/dafahan/unila-ai/internal/domain"
+	"github.com/dafahan/unila-ai/pkg/bm25"
 	"github.com/dafahan/unila-ai/pkg/config"
 )
 
 type IngestionUseCase struct {
-	llm      domain.LLMProvider
-	repo     domain.DocumentRepository
-	cfg      *config.Config
+	llm  domain.LLMProvider
+	repo domain.DocumentRepository
+	cfg  *config.Config
+	bm25 *bm25.Index
 }
 
-func NewIngestionUseCase(llm domain.LLMProvider, repo domain.DocumentRepository, cfg *config.Config) *IngestionUseCase {
-	return &IngestionUseCase{llm: llm, repo: repo, cfg: cfg}
+func NewIngestionUseCase(llm domain.LLMProvider, repo domain.DocumentRepository, cfg *config.Config, bm25Idx *bm25.Index) *IngestionUseCase {
+	return &IngestionUseCase{llm: llm, repo: repo, cfg: cfg, bm25: bm25Idx}
 }
 
-// IngestText splits text into chunks, embeds each, and saves to Qdrant.
+// IngestText splits text into chunks, computes dense + BM25 sparse vectors, and saves to Qdrant.
 func (uc *IngestionUseCase) IngestText(ctx context.Context, filename, text string) (int, error) {
 	if err := uc.ensureCollection(ctx); err != nil {
 		return 0, err
@@ -31,10 +33,18 @@ func (uc *IngestionUseCase) IngestText(ctx context.Context, filename, text strin
 	rawChunks := deduplicateChunks(splitIntoChunks(text, uc.cfg.ChunkSize, uc.cfg.ChunkOverlap))
 	docID := uuid.New().String()
 
+	// Update BM25 corpus statistics from this batch of chunks before computing vectors,
+	// so IDF values include the current document's term frequencies.
+	uc.bm25.AddChunks(rawChunks)
+	if err := uc.bm25.Save(); err != nil {
+		// Non-fatal: BM25 stats will be recomputed next time if save fails.
+		fmt.Printf("warn: failed to save BM25 stats: %v\n", err)
+	}
+
 	chunks := make([]domain.Chunk, len(rawChunks))
 	errCh := make(chan error, 1)
 
-	// Worker pool — limit concurrency to avoid OOM on 16GB RAM
+	// Worker pool — limit concurrency to avoid OOM on 16GB RAM.
 	const workers = 4
 	sem := make(chan struct{}, workers)
 	var wg sync.WaitGroup
@@ -54,12 +64,16 @@ func (uc *IngestionUseCase) IngestText(ctx context.Context, filename, text strin
 				}
 				return
 			}
+
+			sparseIdx, sparseVal := uc.bm25.VectorizeDoc(text)
 			chunks[i] = domain.Chunk{
-				ID:         uuid.New().String(),
-				DocumentID: docID,
-				Filename:   filename,
-				Text:       text,
-				Vector:     vec,
+				ID:            uuid.New().String(),
+				DocumentID:    docID,
+				Filename:      filename,
+				Text:          text,
+				Vector:        vec,
+				SparseIndices: sparseIdx,
+				SparseValues:  sparseVal,
 			}
 		}(i, raw)
 	}
@@ -151,7 +165,6 @@ func splitIntoChunks(text string, size, overlap int) []string {
 		chunk := buf.String()
 		chunks = append(chunks, chunk)
 
-		// Step back for overlap
 		if overlap > 0 && pos < len(words) {
 			overlapWords := 0
 			for i := len(chunk) - 1; i >= 0 && overlapWords*5 < overlap; i-- {

@@ -56,6 +56,8 @@ Pertanyaan Mahasiswa (EN/ID)          ↑
 | Serving PDF statis untuk atribusi sumber | ✅ |
 | Antarmuka bilingual EN/ID (toggle) | ✅ |
 | Prompt LLM bilingual sesuai bahasa pengguna | ✅ |
+| Query translation EN→ID sebelum retrieval | ✅ |
+| Streaming response (SSE, token per token) | ✅ |
 | Riwayat percakapan multi-turn | ✅ |
 | Rendering Markdown pada respons | ✅ |
 | Fallback ke Gemini API | ✅ |

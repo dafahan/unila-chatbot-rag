@@ -87,6 +87,51 @@ func (o *OllamaAdapter) GenerateEmbedding(ctx context.Context, text string) ([]f
 	return result.Embedding, nil
 }
 
+func (o *OllamaAdapter) GenerateCompletionStream(ctx context.Context, prompt string, onToken func(string)) error {
+	body, _ := json.Marshal(map[string]any{
+		"model":  o.model,
+		"prompt": prompt,
+		"stream": true,
+		"options": map[string]any{
+			"temperature": 0.3,
+			"top_p":       0.9,
+		},
+	})
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, o.baseURL+"/api/generate", bytes.NewReader(body))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := o.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("ollama stream: %w", err)
+	}
+	defer resp.Body.Close()
+
+	decoder := json.NewDecoder(resp.Body)
+	for {
+		var chunk struct {
+			Response string `json:"response"`
+			Done     bool   `json:"done"`
+		}
+		if err := decoder.Decode(&chunk); err != nil {
+			if err == io.EOF {
+				break
+			}
+			return fmt.Errorf("ollama stream decode: %w", err)
+		}
+		if chunk.Response != "" {
+			onToken(chunk.Response)
+		}
+		if chunk.Done {
+			break
+		}
+	}
+	return nil
+}
+
 func (o *OllamaAdapter) EmbeddingDimension() int {
 	return o.dimension
 }

@@ -14,7 +14,7 @@ export interface ChatResponse {
 	sources: { filename: string; page_number: number; text: string }[];
 }
 
-export async function sendChat(query: string, history: Message[], language = 'en'): Promise<ChatResponse> {
+export async function sendChat(query: string, history: Message[], language = 'id'): Promise<ChatResponse> {
 	const res = await fetch(`${BASE}/api/chat`, {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -41,6 +41,45 @@ export async function listDocuments(): Promise<DocumentInfo[]> {
 	const res = await fetch(`${BASE}/api/documents`);
 	if (!res.ok) throw new Error(await res.text());
 	return res.json();
+}
+
+export async function sendChatStream(
+	query: string,
+	history: Message[],
+	language: string,
+	onToken: (token: string) => void,
+	onDone: (sources: ChatResponse['sources']) => void,
+	onError: (err: string) => void
+): Promise<void> {
+	const res = await fetch(`${BASE}/api/chat/stream`, {
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ query, history, language })
+	});
+	if (!res.ok) throw new Error(await res.text());
+
+	const reader = res.body!.getReader();
+	const decoder = new TextDecoder();
+	let buffer = '';
+
+	while (true) {
+		const { done, value } = await reader.read();
+		if (done) break;
+
+		buffer += decoder.decode(value, { stream: true });
+		const lines = buffer.split('\n');
+		buffer = lines.pop() ?? '';
+
+		for (const line of lines) {
+			if (!line.startsWith('data: ')) continue;
+			const raw = line.slice(6).trim();
+			if (!raw) continue;
+			const event = JSON.parse(raw);
+			if (event.error) { onError(event.error); return; }
+			if (event.token) onToken(event.token);
+			if (event.done) onDone(event.sources ?? []);
+		}
+	}
 }
 
 export async function deleteDocument(filename: string): Promise<void> {

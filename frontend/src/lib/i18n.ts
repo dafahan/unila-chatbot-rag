@@ -3,7 +3,7 @@ import { writable, derived } from 'svelte/store';
 export type Lang = 'en' | 'id';
 
 const stored = (typeof localStorage !== 'undefined' ? localStorage.getItem('lang') : null) as Lang | null;
-export const lang = writable<Lang>(stored ?? 'en');
+export const lang = writable<Lang>(stored ?? 'id');
 
 lang.subscribe(v => {
 	if (typeof localStorage !== 'undefined') localStorage.setItem('lang', v);

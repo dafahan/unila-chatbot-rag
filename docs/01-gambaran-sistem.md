@@ -63,9 +63,15 @@ Chunking → Deduplikasi Jaccard → Embedding Paralel → Simpan ke Qdrant
 
 ### Alur Chat RAG (Mahasiswa)
 ```
-Pertanyaan (+ pilihan bahasa EN/ID) → Embedding → Pencarian Hybrid →
-Keyword Boost Reranking → Konstruksi Prompt Bilingual →
-LLM → Jawaban (Markdown) + Link Sumber PDF
+Pertanyaan (+ pilihan bahasa EN/ID)
+        ↓ [jika EN] translate query ke ID via LLM
+  Embedding (dense) + BM25 (sparse)
+        ↓
+  Qdrant RRF Fusion → Top-K Chunks
+        ↓
+  Konstruksi Prompt Bilingual → LLM
+        ↓ streaming token per token (SSE)
+  Jawaban muncul bertahap di UI + Link Sumber PDF
 ```
 
 ## 1.5 Dukungan Bilingual

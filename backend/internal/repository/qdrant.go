@@ -3,8 +3,6 @@ package repository
 import (
 	"context"
 	"fmt"
-	"sort"
-	"strings"
 
 	"github.com/google/uuid"
 	pb "github.com/qdrant/go-client/qdrant"
@@ -14,10 +12,16 @@ import (
 	"github.com/dafahan/unila-ai/internal/domain"
 )
 
+// Named vector keys used in the Qdrant collection.
+const (
+	vecDense  = "dense"
+	vecSparse = "bm25"
+)
+
 type QdrantRepository struct {
-	client     pb.PointsClient
+	client      pb.PointsClient
 	collections pb.CollectionsClient
-	collection string
+	collection  string
 }
 
 func NewQdrantRepository(host string, port int, collection string) (*QdrantRepository, error) {
@@ -48,30 +52,64 @@ func (r *QdrantRepository) CollectionExists() (bool, error) {
 	return false, nil
 }
 
+// CreateCollection creates the collection with named dense + sparse vectors.
+// Dense: "dense" (Cosine similarity). Sparse: "bm25" (Dot product via RRF fusion).
+//
+// NOTE: If upgrading from a single-vector collection, delete the old collection
+// from the Qdrant dashboard (/dashboard) and re-upload all documents.
 func (r *QdrantRepository) CreateCollection(dimension int) error {
 	_, err := r.collections.Create(context.Background(), &pb.CreateCollection{
 		CollectionName: r.collection,
 		VectorsConfig: &pb.VectorsConfig{
-			Config: &pb.VectorsConfig_Params{
-				Params: &pb.VectorParams{
-					Size:     uint64(dimension),
-					Distance: pb.Distance_Cosine,
+			Config: &pb.VectorsConfig_ParamsMap{
+				ParamsMap: &pb.VectorParamsMap{
+					Map: map[string]*pb.VectorParams{
+						vecDense: {
+							Size:     uint64(dimension),
+							Distance: pb.Distance_Cosine,
+						},
+					},
 				},
+			},
+		},
+		SparseVectorsConfig: &pb.SparseVectorConfig{
+			Map: map[string]*pb.SparseVectorParams{
+				vecSparse: {},
 			},
 		},
 	})
 	return err
 }
 
+// SaveChunks upserts chunks with both dense and BM25 sparse named vectors.
 func (r *QdrantRepository) SaveChunks(chunks []domain.Chunk) error {
 	points := make([]*pb.PointStruct, 0, len(chunks))
 	for _, c := range chunks {
 		id := uuid.New().String()
+
+		namedVecs := map[string]*pb.Vector{
+			vecDense: {
+				Vector: &pb.Vector_Dense{
+					Dense: &pb.DenseVector{Data: c.Vector},
+				},
+			},
+		}
+		if len(c.SparseIndices) > 0 {
+			namedVecs[vecSparse] = &pb.Vector{
+				Vector: &pb.Vector_Sparse{
+					Sparse: &pb.SparseVector{
+						Values:  c.SparseValues,
+						Indices: c.SparseIndices,
+					},
+				},
+			}
+		}
+
 		points = append(points, &pb.PointStruct{
 			Id: &pb.PointId{PointIdOptions: &pb.PointId_Uuid{Uuid: id}},
 			Vectors: &pb.Vectors{
-				VectorsOptions: &pb.Vectors_Vector{
-					Vector: &pb.Vector{Data: c.Vector},
+				VectorsOptions: &pb.Vectors_Vectors{
+					Vectors: &pb.NamedVectors{Vectors: namedVecs},
 				},
 			},
 			Payload: map[string]*pb.Value{
@@ -90,8 +128,84 @@ func (r *QdrantRepository) SaveChunks(chunks []domain.Chunk) error {
 	return err
 }
 
+// SearchSimilar performs sparse-dense hybrid search using Qdrant's native
+// prefetch + Reciprocal Rank Fusion (RRF). Both the dense vector (semantic
+// similarity via cosine) and the BM25 sparse vector (lexical relevance via
+// dot product) are used as independent retrieval signals whose ranked lists
+// are merged by RRF. Falls back to dense-only if no sparse vector is provided.
+func (r *QdrantRepository) SearchSimilar(denseVec []float32, sparseIndices []uint32, sparseValues []float32, topK int) ([]domain.Chunk, error) {
+	ctx := context.Background()
+	candidateLimit := uint64(topK * 4)
+	if candidateLimit < 20 {
+		candidateLimit = 20
+	}
+
+	prefetches := []*pb.PrefetchQuery{
+		{
+			Query: &pb.Query{
+				Variant: &pb.Query_Nearest{
+					Nearest: &pb.VectorInput{
+						Variant: &pb.VectorInput_Dense{
+							Dense: &pb.DenseVector{Data: denseVec},
+						},
+					},
+				},
+			},
+			Using: strPtr(vecDense),
+			Limit: uint64Ptr(candidateLimit),
+		},
+	}
+
+	if len(sparseIndices) > 0 {
+		prefetches = append(prefetches, &pb.PrefetchQuery{
+			Query: &pb.Query{
+				Variant: &pb.Query_Nearest{
+					Nearest: &pb.VectorInput{
+						Variant: &pb.VectorInput_Sparse{
+							Sparse: &pb.SparseVector{
+								Indices: sparseIndices,
+								Values:  sparseValues,
+							},
+						},
+					},
+				},
+			},
+			Using: strPtr(vecSparse),
+			Limit: uint64Ptr(candidateLimit),
+		})
+	}
+
+	resp, err := r.client.Query(ctx, &pb.QueryPoints{
+		CollectionName: r.collection,
+		Prefetch:       prefetches,
+		Query: &pb.Query{
+			Variant: &pb.Query_Fusion{
+				Fusion: pb.Fusion_RRF,
+			},
+		},
+		Limit: uint64Ptr(uint64(topK)),
+		WithPayload: &pb.WithPayloadSelector{
+			SelectorOptions: &pb.WithPayloadSelector_Enable{Enable: true},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("qdrant query: %w", err)
+	}
+
+	chunks := make([]domain.Chunk, 0, len(resp.Result))
+	for _, pt := range resp.Result {
+		p := pt.Payload
+		chunks = append(chunks, domain.Chunk{
+			DocumentID: p["document_id"].GetStringValue(),
+			Filename:   p["filename"].GetStringValue(),
+			PageNumber: int(p["page"].GetIntegerValue()),
+			Text:       p["text"].GetStringValue(),
+		})
+	}
+	return chunks, nil
+}
+
 func (r *QdrantRepository) ListDocuments() ([]domain.DocumentInfo, error) {
-	// Scroll all points, collect unique filenames and count chunks
 	var offset *pb.PointId
 	counts := make(map[string]int)
 
@@ -124,7 +238,7 @@ func (r *QdrantRepository) ListDocuments() ([]domain.DocumentInfo, error) {
 }
 
 func (r *QdrantRepository) DeleteByFilename(filename string) (int, error) {
-	resp, err := r.client.Delete(context.Background(), &pb.DeletePoints{
+	_, err := r.client.Delete(context.Background(), &pb.DeletePoints{
 		CollectionName: r.collection,
 		Points: &pb.PointsSelector{
 			PointsSelectorOneOf: &pb.PointsSelector_Filter{
@@ -148,68 +262,9 @@ func (r *QdrantRepository) DeleteByFilename(filename string) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("qdrant delete: %w", err)
 	}
-	_ = resp
 	return 0, nil
 }
 
-func ptr[T any](v T) *T { return &v }
-
-// SearchSimilar does hybrid search: vector search + keyword boost reranking.
-func (r *QdrantRepository) SearchSimilar(vector []float32, keywords []string, topK int) ([]domain.Chunk, error) {
-	// Fetch more candidates than needed so reranker has room to work
-	candidates := topK * 4
-	if candidates < 20 {
-		candidates = 20
-	}
-
-	resp, err := r.client.Search(context.Background(), &pb.SearchPoints{
-		CollectionName: r.collection,
-		Vector:         vector,
-		Limit:          uint64(candidates),
-		WithPayload:    &pb.WithPayloadSelector{SelectorOptions: &pb.WithPayloadSelector_Enable{Enable: true}},
-	})
-	if err != nil {
-		return nil, fmt.Errorf("qdrant search: %w", err)
-	}
-
-	type scored struct {
-		chunk domain.Chunk
-		score float64
-	}
-
-	results := make([]scored, 0, len(resp.Result))
-	for _, pt := range resp.Result {
-		p := pt.Payload
-		text := p["text"].GetStringValue()
-		textLower := strings.ToLower(text)
-
-		// Keyword boost: +0.1 per keyword found in the chunk
-		boost := 0.0
-		for _, kw := range keywords {
-			if strings.Contains(textLower, strings.ToLower(kw)) {
-				boost += 0.1
-			}
-		}
-
-		results = append(results, scored{
-			chunk: domain.Chunk{
-				DocumentID: p["document_id"].GetStringValue(),
-				Filename:   p["filename"].GetStringValue(),
-				PageNumber: int(p["page"].GetIntegerValue()),
-				Text:       text,
-			},
-			score: float64(pt.Score) + boost,
-		})
-	}
-
-	// Sort by combined score descending
-	sort.Slice(results, func(i, j int) bool {
-		return results[i].score > results[j].score
-	})
-
-	chunks := make([]domain.Chunk, 0, topK)
-	for i := 0; i < topK && i < len(results); i++ {
-		chunks = append(chunks, results[i].chunk)
-	}
-	return chunks, nil
-}
+func ptr[T any](v T) *T        { return &v }
+func strPtr(s string) *string  { return &s }
+func uint64Ptr(n uint64) *uint64 { return &n }

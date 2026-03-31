@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { sendChat, pdfUrl, type Message } from '$lib/api';
+	import { sendChatStream, pdfUrl, type Message } from '$lib/api';
 	import { t, lang, toggleLang } from '$lib/i18n';
 	import { tick } from 'svelte';
 	import { marked } from 'marked';
@@ -12,6 +12,7 @@
 		role: 'user' | 'assistant';
 		content: string;
 		sources?: { filename: string; page: number; text: string }[];
+		streaming?: boolean;
 	}
 
 	let entries: ChatEntry[] = $state([]);
@@ -36,16 +37,34 @@
 		await tick();
 		scrollToBottom();
 
+		// Capture history before adding the streaming assistant entry
+		const historySnapshot = toHistory().slice(0, -1);
+
+		// Add streaming assistant entry immediately so the cursor appears
+		entries.push({ role: 'assistant', content: '', sources: [], streaming: true });
+		const idx = entries.length - 1;
+
 		try {
-			const res = await sendChat(query, toHistory().slice(0, -1), $lang);
-			entries.push({
-				role: 'assistant',
-				content: res.answer,
-				sources: res.sources?.filter(s => s.filename) ?? []
-			});
+			await sendChatStream(
+				query,
+				historySnapshot,
+				$lang,
+				(token) => {
+					entries[idx].content += token;
+					scrollToBottom();
+				},
+				(sources) => {
+					entries[idx].sources = sources;
+					entries[idx].streaming = false;
+				},
+				(err) => {
+					error = err;
+					entries.splice(idx, 1);
+				}
+			);
 		} catch {
 			error = $t.serverError;
-			entries.pop();
+			entries.splice(idx, 1);
 		} finally {
 			loading = false;
 			await tick();
@@ -156,7 +175,11 @@
 								: 'bg-white border border-gray-100 shadow-sm text-gray-800 rounded-bl-sm'}"
 							style={entry.role === 'user' ? 'background-color: #1a3557;' : ''}>
 							{#if entry.role === 'assistant'}
-								{@html renderMarkdown(entry.content)}
+								{#if entry.streaming}
+									<span class="whitespace-pre-wrap">{entry.content}</span><span class="inline-block w-0.5 h-4 ml-0.5 align-middle animate-pulse" style="background-color: #c9a84c;"></span>
+								{:else}
+									{@html renderMarkdown(entry.content)}
+								{/if}
 							{:else}
 								{entry.content}
 							{/if}
@@ -184,7 +207,7 @@
 				</div>
 			{/each}
 
-			{#if loading}
+			{#if loading && !entries.at(-1)?.streaming}
 				<div class="flex justify-start gap-3">
 					<div class="w-7 h-7 rounded-lg shrink-0 flex items-center justify-center"
 						style="background-color: #1a3557;">

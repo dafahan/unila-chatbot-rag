@@ -10,7 +10,8 @@ Built with Go, SvelteKit, Qdrant, and Ollama (Llama 3 8B). Supports bilingual re
 - **Semantic search** — hybrid vector + keyword boost retrieval
 - **Accurate answers** — grounded in uploaded documents, no hallucination
 - **Source links** — each answer links back to the original PDF
-- **Bilingual** — full EN/ID toggle for UI and LLM responses
+- **Bilingual** — full EN/ID toggle; English queries are translated to Indonesian before retrieval
+- **Streaming** — responses stream token by token via SSE (no waiting for full response)
 - **Multi-turn chat** — conversation history maintained on the client
 - **Self-hosted** — runs entirely on local campus infrastructure
 
@@ -112,7 +113,8 @@ The app is available at `http://localhost:5173`. The backend API runs at `http:/
 
 | Method | Path | Description |
 |---|---|---|
-| `POST` | `/api/chat` | Send a question, get an answer |
+| `POST` | `/api/chat` | Send a question, get full answer (non-streaming) |
+| `POST` | `/api/chat/stream` | Send a question, stream answer via SSE |
 | `POST` | `/api/documents/upload` | Upload a PDF |
 | `GET` | `/api/documents` | List all documents |
 | `DELETE` | `/api/documents/{filename}` | Remove a document |

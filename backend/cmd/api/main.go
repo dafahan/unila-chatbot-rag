@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/dafahan/unila-ai/internal/handler"
 	"github.com/dafahan/unila-ai/internal/repository"
 	"github.com/dafahan/unila-ai/internal/usecase"
+	"github.com/dafahan/unila-ai/pkg/bm25"
 	"github.com/dafahan/unila-ai/pkg/config"
 )
 
@@ -41,9 +43,15 @@ func main() {
 		log.Fatalf("qdrant: %v", err)
 	}
 
+	// --- Wire BM25 Index ---
+	bm25Idx, err := bm25.Load(filepath.Join(cfg.UploadDir, ".bm25_stats.json"))
+	if err != nil {
+		log.Fatalf("bm25 index: %v", err)
+	}
+
 	// --- Wire Use Cases ---
-	chatUC := usecase.NewChatUseCase(llm, repo, cfg)
-	ingestUC := usecase.NewIngestionUseCase(llm, repo, cfg)
+	chatUC := usecase.NewChatUseCase(llm, repo, cfg, bm25Idx)
+	ingestUC := usecase.NewIngestionUseCase(llm, repo, cfg, bm25Idx)
 
 	// --- Wire Handlers ---
 	chatH := handler.NewChatHandler(chatUC)
@@ -52,6 +60,7 @@ func main() {
 	// --- Router ---
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/chat", chatH.Chat)
+	mux.HandleFunc("POST /api/chat/stream", chatH.ChatStream)
 	mux.HandleFunc("POST /api/documents/upload", docH.Upload)
 	mux.HandleFunc("GET /api/documents", docH.List)
 	mux.HandleFunc("DELETE /api/documents/{filename}", docH.Delete)
