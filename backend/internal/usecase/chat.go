@@ -48,10 +48,13 @@ func (uc *ChatUseCase) Answer(ctx context.Context, req domain.ChatRequest) (*dom
 		return nil, fmt.Errorf("search: %w", err)
 	}
 
-	// 4. Build prompt using the original query (user sees their own language)
-	prompt := buildPrompt(req, chunks)
+	// 4. Check context relevance — selects strict OOD guardrail mode when false.
+	relevant := uc.checkRelevance(ctx, req.Query, chunks)
 
-	// 5. Generate answer
+	// 5. Build prompt using the original query (user sees their own language)
+	prompt := buildPrompt(req, chunks, relevant)
+
+	// 6. Generate answer
 	answer, err := uc.llm.GenerateCompletion(ctx, prompt)
 	if err != nil {
 		return nil, fmt.Errorf("generate: %w", err)
@@ -72,6 +75,30 @@ func (uc *ChatUseCase) translateToID(ctx context.Context, query string) (string,
 		return "", err
 	}
 	return strings.TrimSpace(result), nil
+}
+
+// checkRelevance asks the LLM whether the retrieved chunks are relevant to the
+// query. Returns true if context should be used, false if Qdrant likely
+// returned off-topic results (hallucinated retrieval).
+func (uc *ChatUseCase) checkRelevance(ctx context.Context, query string, chunks []domain.Chunk) bool {
+	if len(chunks) == 0 {
+		return false
+	}
+
+	var sb strings.Builder
+	sb.WriteString("Kamu adalah penilai relevansi. Tugasmu HANYA menentukan apakah konteks berikut relevan untuk menjawab pertanyaan.\n\n")
+	fmt.Fprintf(&sb, "Pertanyaan: %s\n\nKonteks:\n", query)
+	for i, c := range chunks {
+		fmt.Fprintf(&sb, "[%d] %s\n", i+1, c.Text)
+	}
+	sb.WriteString("\nApakah konteks di atas RELEVAN untuk menjawab pertanyaan tersebut? Jawab HANYA dengan satu kata: YA atau TIDAK.")
+
+	result, err := uc.llm.GenerateCompletion(ctx, sb.String())
+	if err != nil {
+		return true // default: gunakan context jika gagal menilai
+	}
+	result = strings.ToLower(strings.TrimSpace(result))
+	return strings.HasPrefix(result, "ya") || strings.HasPrefix(result, "yes")
 }
 
 // AnswerStream runs the full RAG pipeline and streams LLM tokens to onToken.
@@ -95,53 +122,85 @@ func (uc *ChatUseCase) AnswerStream(ctx context.Context, req domain.ChatRequest,
 		return nil, fmt.Errorf("search: %w", err)
 	}
 
-	prompt := buildPrompt(req, chunks)
+	relevant := uc.checkRelevance(ctx, req.Query, chunks)
+	prompt := buildPrompt(req, chunks, relevant)
 	if err := uc.llm.GenerateCompletionStream(ctx, prompt, onToken); err != nil {
 		return nil, fmt.Errorf("stream: %w", err)
 	}
 	return chunks, nil
 }
 
-var promptLang = map[string][8]string{
-	"en": {
-		"You are an academic assistant for Universitas Lampung (UNILA).",
-		"Answer DIRECTLY and COMPLETELY based on the document context below.",
-		"- Go straight to the answer, NO opening remarks whatsoever.",
-		"- When describing a UI action (click, menu, button), ALWAYS state which menu or page it is located on.",
-		"- NEVER mention file names, document names, or example numbers in your answer.",
-		"- NEVER write 'According to the document...' or similar phrases.",
-		"- NEVER reference images, figures, tables, or screenshots (e.g. 'as shown in the image below') — you cannot display them.",
-		"- If information is unavailable, answer ONLY: 'This information is not available. Please contact the UPT Admin.'",
-	},
+var noInfoMessages = map[string]string{
+	"id": "Informasi ini tidak tersedia pada dokumen regulasi UNILA. Silakan hubungi Admin UPT.",
+	"en": "This information is not available in the UNILA regulatory documents. Please contact the UPT Admin.",
+}
+
+func noInfoMessage(lang string) string {
+	if msg, ok := noInfoMessages[lang]; ok {
+		return msg
+	}
+	return noInfoMessages["id"]
+}
+
+type promptRules struct {
+	system      string
+	commonRules []string
+	// fallback when context is present but answer not found in it
+	contextFallback string
+	// noContextNote is injected when Qdrant result is not relevant
+	noContextNote string
+}
+
+var langRules = map[string]promptRules{
 	"id": {
-		"Kamu adalah asisten akademik Universitas Lampung (UNILA).",
-		"Jawab LANGSUNG dan LENGKAP berdasarkan konteks dokumen di bawah.",
-		"- Langsung ke isi jawaban, TANPA kalimat pembuka apapun.",
-		"- DILARANG menyebut nama file, nama dokumen, atau nomor contoh dalam jawaban.",
-		"- DILARANG menulis 'Menurut panduan...', 'Berdasarkan dokumen...', atau sejenisnya.",
-		"- DILARANG menyebut gambar, foto, tabel, atau tangkapan layar (contoh: 'seperti gambar berikut') — kamu tidak bisa menampilkannya.",
-		"- Saat menjelaskan aksi di UI (klik, menu, tombol), SELALU sebutkan di menu atau halaman mana aksi tersebut berada.",
-		"- Jika informasi tidak tersedia, jawab HANYA: 'Informasi ini tidak tersedia. Silakan hubungi Admin UPT.'",
+		system: "Kamu adalah asisten akademik Universitas Lampung (UNILA).",
+		commonRules: []string{
+			"- Langsung ke isi jawaban, TANPA kalimat pembuka apapun.",
+			"- DILARANG menyebut nama file, nama dokumen, atau nomor contoh dalam jawaban.",
+			"- DILARANG menulis 'Menurut panduan...', 'Berdasarkan dokumen...', atau sejenisnya.",
+			"- DILARANG menyebut gambar, foto, tabel, atau tangkapan layar — kamu tidak bisa menampilkannya.",
+			"- Saat menjelaskan aksi di UI (klik, menu, tombol), SELALU sebutkan di menu atau halaman mana aksi tersebut berada.",
+		},
+		contextFallback: "- Jika informasi tidak ada dalam konteks, jawab HANYA: 'Informasi ini tidak tersedia pada dokumen regulasi UNILA. Silakan hubungi Admin UPT.'",
+		noContextNote:   "CATATAN: Dokumen tidak memiliki informasi relevan. Jawab berdasarkan pengetahuanmu secara lengkap dan detail. Jika benar-benar tidak tahu, baru nyatakan informasi tidak tersedia.",
+	},
+	"en": {
+		system: "You are an academic assistant for Universitas Lampung (UNILA).",
+		commonRules: []string{
+			"- Go straight to the answer, NO opening remarks whatsoever.",
+			"- When describing a UI action (click, menu, button), ALWAYS state which menu or page it is located on.",
+			"- NEVER mention file names, document names, or example numbers in your answer.",
+			"- NEVER write 'According to the document...' or similar phrases.",
+			"- NEVER reference images, figures, tables, or screenshots — you cannot display them.",
+		},
+		contextFallback: "- If information is not in the context, answer ONLY: 'This information is not available in the UNILA regulatory documents. Please contact the UPT Admin.'",
+		noContextNote:   "NOTE: Documents have no relevant information. Answer fully and in detail from your own knowledge. Only state information is unavailable if you truly don't know.",
 	},
 }
 
-func buildPrompt(req domain.ChatRequest, chunks []domain.Chunk) string {
+func buildPrompt(req domain.ChatRequest, chunks []domain.Chunk, contextRelevant bool) string {
 	lang := req.Language
 	if lang != "en" {
 		lang = "id"
 	}
-	p := promptLang[lang]
+	r := langRules[lang]
 
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "%s %s\nSTRICT RULES:\n%s\n%s\n%s\n%s\n%s\n%s\n- Use bullet points or numbering if listing items.\n- ALWAYS respond in the selected language (%s).\n\n",
-		p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], lang)
+	fmt.Fprintf(&sb, "%s\nSTRICT RULES:\n", r.system)
+	for _, rule := range r.commonRules {
+		sb.WriteString(rule + "\n")
+	}
+	sb.WriteString(r.contextFallback + "\n")
+	fmt.Fprintf(&sb, "- Use bullet points or numbering if listing items.\n- ALWAYS respond in the selected language (%s).\n\n", lang)
 
-	if len(chunks) > 0 {
+	if contextRelevant {
 		sb.WriteString("=== CONTEXT ===\n")
 		for i, c := range chunks {
 			fmt.Fprintf(&sb, "[%d] (Source: %s, Page %d)\n%s\n\n", i+1, c.Filename, c.PageNumber, c.Text)
 		}
 		sb.WriteString("=== END CONTEXT ===\n\n")
+	} else {
+		sb.WriteString(r.noContextNote + "\n\n")
 	}
 
 	if len(req.History) > 0 {
