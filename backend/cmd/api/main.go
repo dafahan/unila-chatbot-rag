@@ -34,7 +34,11 @@ func main() {
 		}
 		llm = g
 	default: // "ollama"
-		llm = adapter.NewOllamaAdapter(cfg.OllamaBaseURL, cfg.OllamaModel, cfg.OllamaEmbedModel)
+		o, err := adapter.NewOllamaAdapter(cfg.OllamaBaseURL, cfg.OllamaModel, cfg.OllamaEmbedModel)
+		if err != nil {
+			log.Fatalf("ollama adapter: %v", err)
+		}
+		llm = o
 	}
 
 	// --- Wire Repository ---

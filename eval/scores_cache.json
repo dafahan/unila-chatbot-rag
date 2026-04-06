@@ -1,0 +1,112 @@
+{
+  "Berapa ukuran kertas standar untuk penulisan karya ilmiah di UNILA?": {
+    "context_precision": 0.8333333332916666,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Apa saja jenis dosen yang diakui di UNILA?": {
+    "context_precision": 0.6984126983894179,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Apa saja subtab yang tersedia di bagian Data Mahasiswa SIAKAD?": {
+    "context_precision": 0.9999999999,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Apa saja fitur yang tersedia di Menu Perkuliahan SIAKAD?": {
+    "context_precision": 0.9999999999,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Bagaimana aturan penulisan judul bab dalam karya ilmiah UNILA?": {
+    "context_precision": 0.9999999999,
+    "context_recall": 0.3333333333333333,
+    "faithfulness": 1.0
+  },
+  "Kapan semester ganjil dimulai di UNILA berdasarkan Peraturan Akademik 2025?": {
+    "context_precision": 0.99999999995,
+    "context_recall": 0.25,
+    "faithfulness": 1.0
+  },
+  "Apa saja bentuk penilaian yang diberikan kepada mahasiswa dalam mata kuliah praktek?": {
+    "context_precision": 0.0,
+    "context_recall": NaN,
+    "faithfulness": NaN
+  },
+  "Berapa kali pertemuan maksimal dan minimal yang harus dipenuhi dosen dalam satu semester?": {
+    "context_precision": 0.8333333332916666,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Siapa yang menjadi koordinator pembuatan SAP?": {
+    "context_precision": 0.249999999975,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Bagaimana alur pelaksanaan KKN di UNILA?": {
+    "context_precision": 0.7499999999625,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Berapa berat kertas HVS yang digunakan untuk skripsi dan tesis?": {
+    "context_precision": 0.8333333332916666,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Bagaimana cara mendaftar KKN di UNILA?": {
+    "context_precision": 0.9666666666473333,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Kapan SAP (Satuan Acara Perkuliahan) harus dibuat menurut SOP UNILA?": {
+    "context_precision": 0.7222222221981481,
+    "context_recall": 0.0,
+    "faithfulness": NaN
+  },
+  "Apa yang disampaikan saat orientasi KKN di UNILA?": {
+    "context_precision": 0.9999999999,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Berapa jumlah semester dalam satu tahun akademik di UNILA?": {
+    "context_precision": 0.9617346938638119,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Warna tinta apa yang digunakan untuk tulisan pada sampul skripsi?": {
+    "context_precision": 0.99999999995,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Apa alamat website untuk mengakses SIAKAD UNILA?": {
+    "context_precision": 0.99999999995,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Ada berapa pilihan filter status pada menu Berita di SIAKAD?": {
+    "context_precision": 0.3333333333,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Apa saja yang dibutuhkan untuk login ke SIAKAD?": {
+    "context_precision": 0.4444444444296296,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Berapa jam kegiatan untuk 1 SKS praktikum di UNILA?": {
+    "context_precision": 0.7321428571245535,
+    "context_recall": 1.0,
+    "faithfulness": 0.8333333333333334
+  },
+  "Berapa ukuran huruf dan font yang digunakan untuk teks isi skripsi?": {
+    "context_precision": 0.99999999995,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Kapan semester genap dimulai di UNILA?": {
+    "context_precision": 0.9999999999833333,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  }
+}

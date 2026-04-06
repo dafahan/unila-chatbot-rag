@@ -32,6 +32,8 @@ func (uc *ChatUseCase) Answer(ctx context.Context, req domain.ChatRequest) (*dom
 		}
 		// On failure, fall back to original query (dense-only retrieval, BM25 silent).
 	}
+	// Rewrite query into document-style keywords to improve retrieval recall.
+	retrievalQuery = uc.rewriteForRetrieval(ctx, retrievalQuery)
 
 	// 1. Embed the retrieval query (dense vector)
 	queryVec, err := uc.llm.GenerateEmbedding(ctx, retrievalQuery)
@@ -77,6 +79,27 @@ func (uc *ChatUseCase) translateToID(ctx context.Context, query string) (string,
 	return strings.TrimSpace(result), nil
 }
 
+// rewriteForRetrieval rewrites the query into document-style keywords/phrases
+// so that dense and BM25 retrieval better matches academic document language.
+// Result is used only for retrieval — the original query is still shown to the user.
+func (uc *ChatUseCase) rewriteForRetrieval(ctx context.Context, query string) string {
+	prompt := `Ubah pertanyaan berikut menjadi frasa kata kunci singkat yang cocok dicari di dokumen peraturan akademik universitas.
+Keluarkan HANYA kata kunci atau frasa, tanpa kalimat lengkap, tanpa tanda tanya.
+
+Pertanyaan: ` + query + `
+Kata kunci:`
+	result, err := uc.llm.GenerateCompletion(ctx, prompt)
+	if err != nil {
+		return query
+	}
+	rewritten := strings.TrimSpace(result)
+	if rewritten == "" {
+		return query
+	}
+	// Combine original + rewritten so both signals contribute to retrieval
+	return query + " " + rewritten
+}
+
 // checkRelevance asks the LLM whether the retrieved chunks are relevant to the
 // query. Returns true if context should be used, false if Qdrant likely
 // returned off-topic results (hallucinated retrieval).
@@ -86,12 +109,19 @@ func (uc *ChatUseCase) checkRelevance(ctx context.Context, query string, chunks 
 	}
 
 	var sb strings.Builder
-	sb.WriteString("Kamu adalah penilai relevansi. Tugasmu HANYA menentukan apakah konteks berikut relevan untuk menjawab pertanyaan.\n\n")
+	sb.WriteString("Kamu adalah penilai relevansi.\n\n")
+	sb.WriteString("Tugasmu: tentukan apakah konteks di bawah BERKAITAN dengan topik pertanyaan.\n\n")
+	sb.WriteString("Jawab TIDAK hanya jika konteks SAMA SEKALI tidak berhubungan dengan pertanyaan (topik berbeda total).\n")
+	sb.WriteString("Jawab YA jika konteks membahas topik yang sama atau berdekatan, meskipun tidak memiliki jawaban lengkap.\n\n")
 	fmt.Fprintf(&sb, "Pertanyaan: %s\n\nKonteks:\n", query)
 	for i, c := range chunks {
-		fmt.Fprintf(&sb, "[%d] %s\n", i+1, c.Text)
+		textPreview := c.Text
+		if len(textPreview) > 300 {
+			textPreview = textPreview[:300]
+		}
+		fmt.Fprintf(&sb, "[%d] %s\n", i+1, textPreview)
 	}
-	sb.WriteString("\nApakah konteks di atas RELEVAN untuk menjawab pertanyaan tersebut? Jawab HANYA dengan satu kata: YA atau TIDAK.")
+	sb.WriteString("\nApakah konteks berkaitan dengan topik pertanyaan? Jawab HANYA: YA atau TIDAK.")
 
 	result, err := uc.llm.GenerateCompletion(ctx, sb.String())
 	if err != nil {
@@ -110,6 +140,7 @@ func (uc *ChatUseCase) AnswerStream(ctx context.Context, req domain.ChatRequest,
 			retrievalQuery = translated
 		}
 	}
+	retrievalQuery = uc.rewriteForRetrieval(ctx, retrievalQuery)
 
 	queryVec, err := uc.llm.GenerateEmbedding(ctx, retrievalQuery)
 	if err != nil {
@@ -160,6 +191,8 @@ var langRules = map[string]promptRules{
 			"- DILARANG menulis 'Menurut panduan...', 'Berdasarkan dokumen...', atau sejenisnya.",
 			"- DILARANG menyebut gambar, foto, tabel, atau tangkapan layar — kamu tidak bisa menampilkannya.",
 			"- Saat menjelaskan aksi di UI (klik, menu, tombol), SELALU sebutkan di menu atau halaman mana aksi tersebut berada.",
+			"- DILARANG mengarang atau memperkirakan angka, nama, daftar item, atau prosedur yang tidak tertulis eksplisit dalam konteks.",
+			"- SALIN PERSIS nilai spesifik dari konteks: angka, satuan, URL, warna, nama — JANGAN konversi satuan, paraphrase, atau tebak.",
 		},
 		contextFallback: "- Jika informasi tidak ada dalam konteks, jawab HANYA: 'Informasi ini tidak tersedia pada dokumen regulasi UNILA. Silakan hubungi Admin UPT.'",
 		noContextNote:   "CATATAN: Dokumen tidak memiliki informasi relevan. Jawab berdasarkan pengetahuanmu secara lengkap dan detail. Jika benar-benar tidak tahu, baru nyatakan informasi tidak tersedia.",
@@ -170,8 +203,10 @@ var langRules = map[string]promptRules{
 			"- Go straight to the answer, NO opening remarks whatsoever.",
 			"- When describing a UI action (click, menu, button), ALWAYS state which menu or page it is located on.",
 			"- NEVER mention file names, document names, or example numbers in your answer.",
+			"- NEVER fabricate or estimate numbers, names, lists, or procedures not explicitly stated in the context.",
 			"- NEVER write 'According to the document...' or similar phrases.",
 			"- NEVER reference images, figures, tables, or screenshots — you cannot display them.",
+			"- COPY EXACTLY specific values from context: numbers, units, URLs, colors, names — do NOT convert units, paraphrase, or guess.",
 		},
 		contextFallback: "- If information is not in the context, answer ONLY: 'This information is not available in the UNILA regulatory documents. Please contact the UPT Admin.'",
 		noContextNote:   "NOTE: Documents have no relevant information. Answer fully and in detail from your own knowledge. Only state information is unavailable if you truly don't know.",

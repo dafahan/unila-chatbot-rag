@@ -17,14 +17,20 @@ type OllamaAdapter struct {
 	client     *http.Client
 }
 
-func NewOllamaAdapter(baseURL, model, embedModel string) *OllamaAdapter {
-	return &OllamaAdapter{
+func NewOllamaAdapter(baseURL, model, embedModel string) (*OllamaAdapter, error) {
+	a := &OllamaAdapter{
 		baseURL:    baseURL,
 		model:      model,
 		embedModel: embedModel,
-		dimension:  768, // nomic-embed-text default
 		client:     &http.Client{},
 	}
+	// Probe actual dimension so any embed model works without hardcoding.
+	vec, err := a.GenerateEmbedding(context.Background(), "test")
+	if err != nil {
+		return nil, fmt.Errorf("probe embedding dimension: %w", err)
+	}
+	a.dimension = len(vec)
+	return a, nil
 }
 
 func (o *OllamaAdapter) GenerateCompletion(ctx context.Context, prompt string) (string, error) {

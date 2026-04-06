@@ -39,7 +39,7 @@ func (uc *IngestionUseCase) IngestPages(ctx context.Context, filename string, pa
 	}
 	var raws []rawChunk
 	for _, p := range pages {
-		for _, chunk := range splitIntoChunks(p.Text, uc.cfg.ChunkSize, uc.cfg.ChunkOverlap) {
+		for _, chunk := range splitIntoChunks(cleanText(p.Text), uc.cfg.ChunkSize, uc.cfg.ChunkOverlap) {
 			raws = append(raws, rawChunk{text: chunk, page: p.Page})
 		}
 	}
@@ -120,7 +120,7 @@ func (uc *IngestionUseCase) IngestText(ctx context.Context, filename, text strin
 		return 0, err
 	}
 
-	rawChunks := deduplicateChunks(splitIntoChunks(text, uc.cfg.ChunkSize, uc.cfg.ChunkOverlap))
+	rawChunks := deduplicateChunks(splitIntoChunks(cleanText(text), uc.cfg.ChunkSize, uc.cfg.ChunkOverlap))
 	docID := uuid.New().String()
 
 	// Update BM25 corpus statistics from this batch of chunks before computing vectors,
@@ -258,6 +258,18 @@ func jaccardSimilarity(a, b map[string]struct{}) float64 {
 	}
 	union := len(a) + len(b) - intersection
 	return float64(intersection) / float64(union)
+}
+
+// cleanText removes known PDF extraction noise before chunking.
+// "BUKU – " is a recurring header artifact in the SIAKAD guide PDFs.
+func cleanText(text string) string {
+	lines := strings.Split(text, "\n")
+	for i, line := range lines {
+		if idx := strings.Index(line, "BUKU –"); idx != -1 {
+			lines[i] = strings.TrimSpace(line[idx+len("BUKU –"):])
+		}
+	}
+	return strings.Join(lines, "\n")
 }
 
 // splitIntoChunks splits text by words into chunks of roughly `size` chars

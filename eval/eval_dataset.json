@@ -1,0 +1,134 @@
+[
+  {
+    "question": "Berapa ukuran kertas standar untuk penulisan karya ilmiah di UNILA?",
+    "ground_truth": "Kertas berukuran A4 (21 x 29,7 cm).",
+    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf",
+    "prev_score": 0.00
+  },
+  {
+    "question": "Apa saja jenis dosen yang diakui di UNILA?",
+    "ground_truth": "Dosen terdiri atas dosen tetap, dosen tidak tetap, dan dosen tamu.",
+    "source": "Peraturan Akademik 2025.pdf",
+    "prev_score": 0.19
+  },
+  {
+    "question": "Apa saja subtab yang tersedia di bagian Data Mahasiswa SIAKAD?",
+    "ground_truth": "Subtab yang tersedia di Data Mahasiswa antara lain: Ubah Foto, Tab Informasi Umum, Tab Domisili, Tab Orang Tua, Tab Wali, dan Tab Sekolah.",
+    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf",
+    "prev_score": 0.22
+  },
+  {
+    "question": "Apa saja fitur yang tersedia di Menu Perkuliahan SIAKAD?",
+    "ground_truth": "Menu Perkuliahan digunakan untuk mengelola segala aktivitas perkuliahan seperti melihat kurikulum, melakukan proses KRS, melihat jadwal kuliah, mengisi kuesioner, melihat nilai dan KHS, melihat kemajuan belajar, melihat daftar mata kuliah mengulang, mengajukan berhenti studi, dan melihat status semester.",
+    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf",
+    "prev_score": 0.23
+  },
+  {
+    "question": "Bagaimana aturan penulisan judul bab dalam karya ilmiah UNILA?",
+    "ground_truth": "Judul bab diketik 6 cm dari batas atas kertas, disertai logo UNILA serta tahun pada halaman sampul.",
+    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf",
+    "prev_score": 0.23
+  },
+  {
+    "question": "Kapan semester ganjil dimulai di UNILA berdasarkan Peraturan Akademik 2025?",
+    "ground_truth": "Semester Ganjil dimulai pada bulan Agustus.",
+    "source": "Peraturan Akademik 2025.pdf",
+    "prev_score": 0.30
+  },
+  {
+    "question": "Apa saja bentuk penilaian yang diberikan kepada mahasiswa dalam mata kuliah praktek?",
+    "ground_truth": "Penilaian meliputi Kuis, Ujian Tengah Semester (UTS), dan Ujian Akhir Semester (UAS), yang diberikan kepada mahasiswa paling lambat satu minggu setelah ujian dilaksanakan.",
+    "source": "SOP-2020.pdf",
+    "prev_score": 0.33
+  },
+  {
+    "question": "Berapa kali pertemuan maksimal dan minimal yang harus dipenuhi dosen dalam satu semester?",
+    "ground_truth": "Dosen melaksanakan perkuliahan sesuai dengan jadwal kuliah maksimal 16 kali pertemuan atau minimal 14 kali pertemuan.",
+    "source": "SOP-2020.pdf",
+    "prev_score": 0.50
+  },
+  {
+    "question": "Siapa yang menjadi koordinator pembuatan SAP?",
+    "ground_truth": "Ketua Program Studi membuat surat kepada dosen penanggung jawab untuk membuat SAP.",
+    "source": "SOP-2020.pdf",
+    "prev_score": 0.51
+  },
+  {
+    "question": "Bagaimana alur pelaksanaan KKN di UNILA?",
+    "ground_truth": "Alur pelaksanaan KKN di Sentra KKN UNILA meliputi: Pendaftaran KKN, Pembagian kelompok dan penentuan lokasi, Orientasi KKN, Penyusunan proposal kegiatan KKN, Pelaksanaan kegiatan KKN, Pengawasan dan pembimbingan, Penyusunan laporan akhir KKN, Presentasi dan evaluasi KKN, serta Penutupan dan pemberian sertifikat KKN.",
+    "source": "kkn_unila.ac.pdf",
+    "prev_score": 0.52
+  },
+  {
+    "question": "Berapa berat kertas HVS yang digunakan untuk skripsi dan tesis?",
+    "ground_truth": "Kertas HVS dengan bobot 80 gram digunakan untuk skripsi, tesis, dan disertasi. Kertas HVS dengan bobot 70 gram digunakan untuk laporan kerja mahasiswa.",
+    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf",
+    "prev_score": 0.55
+  },
+  {
+    "question": "Bagaimana cara mendaftar KKN di UNILA?",
+    "ground_truth": "Pendaftaran KKN dilaksanakan secara online melalui portal Sentra KKN bagi mahasiswa yang telah memenuhi syarat.",
+    "source": "kkn_unila.ac.pdf",
+    "prev_score": 0.55
+  },
+  {
+    "question": "Kapan SAP (Satuan Acara Perkuliahan) harus dibuat menurut SOP UNILA?",
+    "ground_truth": "SAP dibuat sebelum perkuliahan dimulai pada setiap awal semester.",
+    "source": "SOP-2020.pdf",
+    "prev_score": 0.57
+  },
+  {
+    "question": "Apa yang disampaikan saat orientasi KKN di UNILA?",
+    "ground_truth": "Sentra KKN UNILA akan memberikan informasi mengenai lokasi KKN, etika penghidupan masyarakat, dan hal-hal terkait pelaksanaan KKN.",
+    "source": "kkn_unila.ac.pdf",
+    "prev_score": 0.69
+  },
+  {
+    "question": "Berapa jumlah semester dalam satu tahun akademik di UNILA?",
+    "ground_truth": "Tahun akademik penyelenggaraan pendidikan UNILA terdiri atas 2 (dua) semester yaitu semester ganjil dan semester genap.",
+    "source": "Peraturan Akademik 2025.pdf",
+    "prev_score": 0.76
+  },
+  {
+    "question": "Warna tinta apa yang digunakan untuk tulisan pada sampul skripsi?",
+    "ground_truth": "Tulisan pada kulit (sampul) baik sampul depan maupun punggung sampul menggunakan tinta berwarna emas.",
+    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf",
+    "prev_score": 0.75
+  },
+  {
+    "question": "Apa alamat website untuk mengakses SIAKAD UNILA?",
+    "ground_truth": "Sistem Informasi Akademik UNILA dapat diakses melalui alamat http://siakadu.unila.ac.id/",
+    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf",
+    "prev_score": 0.75
+  },
+  {
+    "question": "Ada berapa pilihan filter status pada menu Berita di SIAKAD?",
+    "ground_truth": "Terdapat 3 pilihan filter status berita: Aktif (untuk menampilkan berita yang sedang aktif), Prioritas (untuk menampilkan berita yang memiliki prioritas tinggi atau penting), dan Aktif dan Prioritas.",
+    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf",
+    "prev_score": 0.75
+  },
+  {
+    "question": "Apa saja yang dibutuhkan untuk login ke SIAKAD?",
+    "ground_truth": "Untuk melakukan login, masukkan Akun Pengguna dan Kata Sandi pengguna.",
+    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf",
+    "prev_score": 0.80
+  },
+  {
+    "question": "Berapa jam kegiatan untuk 1 SKS praktikum di UNILA?",
+    "ground_truth": "Satu SKS praktikum adalah kegiatan belajar di dalam dan di luar laboratorium sebanyak 2 jam per minggu selama satu semester, dikuti dengan 1-2 jam kegiatan terstruktur dan 1-2 jam kegiatan mandiri.",
+    "source": "SOP-2020.pdf",
+    "prev_score": 0.85
+  },
+  {
+    "question": "Berapa ukuran huruf dan font yang digunakan untuk teks isi skripsi?",
+    "ground_truth": "Ukuran huruf 12 dengan font Times New Roman.",
+    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf",
+    "prev_score": 0.94
+  },
+  {
+    "question": "Kapan semester genap dimulai di UNILA?",
+    "ground_truth": "Semester Genap dimulai pada bulan Februari.",
+    "source": "Peraturan Akademik 2025.pdf",
+    "prev_score": 0.99
+  }
+]
