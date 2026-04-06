@@ -20,26 +20,24 @@
 
 Dua adapter diimplementasikan yang keduanya memenuhi interface `LLMProvider`:
 
-- `OllamaAdapter` — komunikasi HTTP ke Ollama API lokal (`temperature: 0.3`, `top_p: 0.9`)
+- `OllamaAdapter` — komunikasi HTTP ke Ollama API lokal, auto-detect dimensi embedding
 - `GeminiAdapter` — komunikasi via SDK resmi Google ke Gemini API
-
-Pemilihan adapter dilakukan saat startup via `LLM_ENGINE` environment variable, tidak mengubah kode use case.
 
 ## 6.3 Tahap 3: Pipeline Ingesti Dokumen
 
 **Status: Selesai**
-
-Sub-tahapan yang telah diimplementasikan:
 
 | Sub-tahap | Implementasi | Status |
 |---|---|---|
 | Ekstraksi teks PDF per-halaman | `pkg/pdf/extract.go` | ✅ |
 | Deteksi boilerplate statistik (>30% halaman) | `pkg/pdf/extract.go` | ✅ |
 | Pembersihan daftar isi (regex) | `pkg/pdf/extract.go` | ✅ |
-| Chunking berbasis kata (512 char, overlap 64) | `usecase/ingestion.go` | ✅ |
+| Pembersihan noise PDF (cleanText — "BUKU –") | `usecase/ingestion.go` | ✅ |
+| Chunking berbasis kata (300 char, overlap 100) | `usecase/ingestion.go` | ✅ |
 | Deduplikasi Jaccard (threshold 0.75) | `usecase/ingestion.go` | ✅ |
-| Embedding paralel (4 worker pool) | `usecase/ingestion.go` | ✅ |
-| Simpan ke Qdrant via gRPC | `repository/qdrant.go` | ✅ |
+| Embedding paralel bge-m3 (4 worker pool) | `usecase/ingestion.go` | ✅ |
+| BM25 sparse vector per chunk | `usecase/ingestion.go` | ✅ |
+| Simpan ke Qdrant via gRPC (dense + sparse) | `repository/qdrant.go` | ✅ |
 | Simpan file PDF ke disk | `handler/document.go` | ✅ |
 
 ## 6.4 Tahap 4: Pencarian Hybrid
@@ -48,38 +46,52 @@ Sub-tahapan yang telah diimplementasikan:
 
 | Sub-tahap | Implementasi | Status |
 |---|---|---|
-| Vector search via Qdrant gRPC | `repository/qdrant.go` | ✅ |
-| Ekspansi kandidat (max(20, 4×TopK)) | `repository/qdrant.go` | ✅ |
-| Ekstraksi keyword (stopword filter ID) | `usecase/chat.go` | ✅ |
-| Keyword boost reranking (+0.1/match) | `repository/qdrant.go` | ✅ |
+| Dense vector search (bge-m3, Cosine) | `repository/qdrant.go` | ✅ |
+| BM25 sparse vector search | `repository/qdrant.go` | ✅ |
+| RRF (Reciprocal Rank Fusion) fusion | `repository/qdrant.go` | ✅ |
+| Score threshold filtering (0.06) | `repository/qdrant.go` | ✅ |
+| Query translation EN→ID via LLM | `usecase/chat.go` | ✅ |
+| Query rewriting untuk retrieval | `usecase/chat.go` | ✅ |
 
-## 6.5 Tahap 5: Rekayasa Prompt dan Generasi
+## 6.5 Tahap 5: Context Relevance Check
+
+**Status: Selesai**
+
+| Sub-tahap | Implementasi | Status |
+|---|---|---|
+| `checkRelevance()` — validasi topik chunks vs query | `usecase/chat.go` | ✅ |
+| Mode prompt dengan konteks (`contextRelevant=true`) | `usecase/chat.go` | ✅ |
+| Mode prompt tanpa konteks (`contextRelevant=false`) | `usecase/chat.go` | ✅ |
+
+## 6.6 Tahap 6: Rekayasa Prompt dan Generasi
 
 **Status: Selesai**
 
 | Sub-tahap | Status |
 |---|---|
-| System prompt bilingual (EN/ID) via `promptLang` map | ✅ |
+| System prompt bilingual (EN/ID) via `langRules` map | ✅ |
 | Penyertaan konteks bernomor dengan atribusi sumber | ✅ |
 | Dukungan riwayat percakapan multi-turn | ✅ |
-| Instruksi anti-hallucination (fallback ke Admin UPT) | ✅ |
-| Instruksi anti-hedging (larang kalimat pembuka basa-basi) | ✅ |
-| Instruksi anti-attribution (larang sebut nama file) | ✅ |
-| Instruksi language enforcement (jawab sesuai bahasa pilihan) | ✅ |
+| Anti-hallucination: DILARANG mengarang angka/nama/prosedur | ✅ |
+| Anti-paraphrase: SALIN PERSIS nilai spesifik dari konteks | ✅ |
+| Anti-hedging: larang kalimat pembuka basa-basi | ✅ |
+| Anti-attribution: larang sebut nama file | ✅ |
+| Language enforcement: jawab sesuai bahasa pilihan | ✅ |
 
-## 6.6 Tahap 6: API dan Manajemen Dokumen
+## 6.7 Tahap 7: API dan Manajemen Dokumen
 
 **Status: Selesai**
 
 | Endpoint | Metode | Keterangan | Status |
 |---|---|---|---|
 | `/api/chat` | POST | RAG query + language field | ✅ |
+| `/api/chat/stream` | POST | RAG query dengan SSE streaming | ✅ |
 | `/api/documents/upload` | POST | Upload PDF + ingest | ✅ |
 | `/api/documents` | GET | Daftar dokumen di Qdrant | ✅ |
 | `/api/documents/{filename}` | DELETE | Hapus dari Qdrant + disk | ✅ |
 | `/uploads/{filename}` | GET | Serving file PDF statis | ✅ |
 
-## 6.7 Tahap 7: Antarmuka Pengguna
+## 6.8 Tahap 8: Antarmuka Pengguna
 
 **Status: Selesai**
 
@@ -92,58 +104,52 @@ Sub-tahapan yang telah diimplementasikan:
 | Link sumber PDF yang dapat diklik | Chat page | ✅ |
 | Saran pertanyaan (suggestion chips) | Chat page | ✅ |
 | Riwayat percakapan dengan clear | Chat page | ✅ |
+| Toggle bahasa EN/ID | Semua halaman | ✅ |
 
-## 6.8 Tahap 8: Sistem Bilingual (i18n)
-
-**Status: Selesai**
-
-| Sub-tahap | Implementasi | Status |
-|---|---|---|
-| Terjemahan EN/ID semua string UI | `src/lib/i18n.ts` | ✅ |
-| Svelte writable store (`lang`) | `src/lib/i18n.ts` | ✅ |
-| Persistensi pilihan bahasa via `localStorage` | `src/lib/i18n.ts` | ✅ |
-| Reactive derived store (`t`) | `src/lib/i18n.ts` | ✅ |
-| Toggle button EN/ID di semua halaman | Landing, Chat, Admin | ✅ |
-| Kirim `language` field ke backend | `src/lib/api.ts` | ✅ |
-| Prompt LLM sesuai bahasa (backend) | `usecase/chat.go` | ✅ |
-
-## 6.9 Tahap 9: Streaming Response
+## 6.9 Tahap 9: Evaluasi RAGAS
 
 **Status: Selesai**
 
 | Sub-tahap | Implementasi | Status |
 |---|---|---|
-| `GenerateCompletionStream()` di `LLMProvider` interface | `domain/llm.go` | ✅ |
-| Streaming via Ollama NDJSON (`stream: true`) | `adapter/ollama.go` | ✅ |
-| Streaming via Gemini `GenerateContentStream` | `adapter/gemini.go` | ✅ |
-| `AnswerStream()` di ChatUseCase | `usecase/chat.go` | ✅ |
-| Endpoint `POST /api/chat/stream` (SSE) | `handler/chat.go` | ✅ |
-| Frontend fetch + ReadableStream parser | `src/lib/api.ts` | ✅ |
-| UI: kursor berkedip saat streaming, Markdown saat done | `routes/chat/+page.svelte` | ✅ |
+| Dataset evaluasi 22 pertanyaan (5 dokumen) | `eval/eval_dataset.json` | ✅ |
+| Script otomasi query ke API + cache response | `eval/run_ragas.py` | ✅ |
+| Evaluasi faithfulness via RAGAS 0.2.6 | `eval/run_ragas.py` | ✅ |
+| Evaluasi context_precision via RAGAS 0.2.6 | `eval/run_ragas.py` | ✅ |
+| Evaluasi context_recall via RAGAS 0.2.6 | `eval/run_ragas.py` | ✅ |
+| Scores cache (skip re-eval NaN secara bertahap) | `eval/scores_cache.json` | ✅ |
+| Report per-pertanyaan + per-dokumen + aggregate | `eval/run_ragas.py` | ✅ |
+
+**Hasil Evaluasi:**
+
+| Metrik | Skor |
+|---|---|
+| Faithfulness | 0.9833 |
+| Context Recall | 0.8849 |
+| Context Precision | 0.7890 |
+| **Overall** | **0.8858** |
 
 ## 6.10 Tantangan dan Solusi
 
 | Tantangan | Solusi yang Diterapkan |
 |---|---|
-| Chunk prakata mendominasi hasil pencarian | Hybrid search + keyword boost reranking |
+| Retrieval gagal untuk query semantik Bahasa Indonesia | Ganti embedding nomic-embed-text → bge-m3 (1024d, multibahasa) |
+| Gap semantik antara query dan teks dokumen | Query rewriting via LLM sebelum embedding |
+| LLM jawab "tidak tersedia" padahal konteks relevan | Longgarkan threshold `checkRelevance` — hanya tolak jika topik benar-benar berbeda |
+| LLM paraphrase nilai spesifik (angka/URL/warna) | Tambah rule "SALIN PERSIS nilai dari konteks" di prompt |
+| Noise "BUKU –" di chunks SIAKAD | `cleanText()` strip prefiks artefak sebelum chunking |
+| Chunk prakata mendominasi hasil pencarian | Hybrid search BM25 + dense dengan RRF fusion |
 | Duplikasi konten dari multi-edisi dokumen | Deduplikasi Jaccard similarity (threshold 0.75) |
 | Noise header/footer dari PDF | Deteksi boilerplate statistik lintas halaman (>30%) |
-| Regex cleaning terlalu spesifik untuk satu dokumen | Ganti ke pendekatan statistik generik |
 | Embedding lambat (sequential) | Worker pool paralel (4 goroutine) |
-| LLM menjawab dalam Bahasa Inggris | Instruksi `ALWAYS respond in [language]` dalam prompt |
-| LLM menambahkan kalimat pembuka basa-basi | Instruksi anti-hedging eksplisit dalam prompt |
-| LLM menyebut nama file/dokumen dalam jawaban | Instruksi anti-attribution dalam prompt |
-| LLM menjawab "Contoh 1-2" (nomor artifak) | Instruksi larang sebut nomor contoh |
-| Jawaban non-deterministik | Turunkan temperature ke 0.3 (dari 0.1 yang terlalu kaku) |
+| LLM menjawab dalam bahasa yang salah | Instruksi `ALWAYS respond in [language]` dalam prompt |
+| Dimensi embedding hardcoded saat ganti model | Auto-detect dimensi via probe embedding saat startup |
 
 ## 6.11 Yang Belum Diimplementasikan (Pengembangan Lanjutan)
 
 | Fitur | Keterangan |
 |---|---|
 | Autentikasi admin | Panel admin saat ini terbuka tanpa login |
-| ~~Streaming response~~ | Sudah diimplementasikan (SSE, token per token) |
-| Tracking nomor halaman PDF akurat | Saat ini nomor halaman bergantung pada data dari model embedding |
-| Evaluasi kuantitatif (RAGAS) | Pengukuran precision/recall/faithfulness sistem RAG |
-| Cross-encoder reranker | Reranking berbasis model ML untuk akurasi lebih tinggi |
-| Sparse vector (BM25 native) | Hybrid search via Qdrant sparse vector API |
+| Cross-encoder reranker | Reranking berbasis model ML setelah retrieval awal |
 | Rate limiting | Pembatasan request per pengguna |
+| Tracking nomor halaman PDF akurat | Saat ini nomor halaman dari metadata extraction |

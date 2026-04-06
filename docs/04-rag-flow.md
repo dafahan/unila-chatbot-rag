@@ -8,68 +8,107 @@ RAG mengatasi keterbatasan utama LLM murni: model tidak mengetahui dokumen inter
 ┌─────────────────────────────────────────────────────────────────┐
 │                        CHAT USE CASE                            │
 │                                                                 │
-│  1. Embed Query          2. Hybrid Search      3. Build Prompt  │
-│  ─────────────           ──────────────        ───────────────  │
-│  "Syarat KRS?"           Qdrant →              System Prompt    │
-│       ↓                  Top-8 Chunks          (EN atau ID)     │
-│  [768-dim vector]        (vector + kw)         + Context[1..8]  │
-│                                                + History        │
-│                                                + Query          │
-│                          4. Generate                            │
-│                          ──────────                             │
-│                          LLM → Jawaban (bahasa sesuai pilihan)  │
+│  1. Query Rewriting      2. Embed + BM25   3. Hybrid Search    │
+│  ──────────────────      ──────────────    ────────────────     │
+│  "Syarat KRS?"           dense (bge-m3)    Qdrant RRF Fusion   │
+│       ↓                  + sparse (BM25)   → Top-8 Chunks      │
+│  "syarat KRS SKS         (1024-dim)                            │
+│   pengambilan mata                                              │
+│   kuliah semester"                                              │
+│                                                                 │
+│  4. Relevance Check      5. Build Prompt   6. Generate         │
+│  ──────────────────      ─────────────     ──────────          │
+│  LLM: "konteks ini       Mode A: + ctx     LLM → Jawaban      │
+│  relevan?" → YA/TIDAK    Mode B: noCtx     (bahasa sesuai     │
+│                                            pilihan)            │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## 4.2 Konstruksi Prompt Bilingual
+## 4.2 Query Rewriting untuk Retrieval
 
-**Implementasi:** `backend/internal/usecase/chat.go` — fungsi `buildPrompt()`
+**Implementasi:** `backend/internal/usecase/chat.go` — fungsi `rewriteForRetrieval()`
 
-Sistem mendukung dua bahasa instruksi: **Bahasa Inggris (EN)** dan **Bahasa Indonesia (ID)**. Bahasa dipilih berdasarkan field `language` pada request dari frontend (default: `"en"`).
+Sebelum embedding, query pengguna ditulis ulang menjadi frasa kata kunci bergaya dokumen. Ini menjembatani gap semantik antara cara pengguna bertanya dengan cara dokumen ditulis.
+
+**Masalah tanpa query rewriting:**
+> Query: *"Apa saja jenis dosen yang diakui di UNILA?"*
+> Dokumen: *"Dosen terdiri atas dosen tetap, dosen tidak tetap, dan dosen tamu."*
+>
+> Kata *"diakui"* tidak muncul di dokumen. Dense embedding harus menjembatani gap ini sepenuhnya.
+
+**Dengan query rewriting:**
+```
+Query asli: "Apa saja jenis dosen yang diakui di UNILA?"
+     ↓ LLM rewrite
+Kata kunci: "jenis dosen dosen tetap tidak tetap tamu"
+     ↓ Gabungkan
+Query retrieval: "Apa saja jenis dosen yang diakui di UNILA? jenis dosen dosen tetap tidak tetap tamu"
+```
+
+Gabungan query asli + kata kunci meningkatkan probabilitas kecocokan baik untuk BM25 (lexical) maupun dense (semantic).
+
+## 4.3 Context Relevance Check (Guardrail Halusinasi)
+
+**Implementasi:** `backend/internal/usecase/chat.go` — fungsi `checkRelevance()`
+
+Setelah retrieval, sistem memvalidasi apakah chunk yang dikembalikan Qdrant memang **berkaitan topik** dengan pertanyaan. Ini mencegah LLM menjawab berdasarkan konteks yang sama sekali tidak relevan.
 
 ```go
-var promptLang = map[string][6]string{
-    "en": {
-        "You are an academic assistant for Universitas Lampung (UNILA).",
-        "Answer DIRECTLY and COMPLETELY based on the document context below.",
-        "- Go straight to the answer, NO opening remarks whatsoever.",
-        "- NEVER mention file names, document names, or example numbers.",
-        "- NEVER write 'According to the document...' or similar phrases.",
-        "- If information is unavailable, answer ONLY: 'This information is not available...'",
-    },
-    "id": {
-        "Kamu adalah asisten akademik Universitas Lampung (UNILA).",
-        "Jawab LANGSUNG dan LENGKAP berdasarkan konteks dokumen di bawah.",
-        "- Langsung ke isi jawaban, TANPA kalimat pembuka apapun.",
-        "- DILARANG menyebut nama file, nama dokumen, atau nomor contoh.",
-        "- DILARANG menulis 'Menurut panduan...', 'Berdasarkan dokumen...'",
-        "- Jika informasi tidak tersedia, jawab HANYA: 'Informasi ini tidak tersedia...'",
-    },
+func (uc *ChatUseCase) checkRelevance(ctx, query, chunks) bool {
+    // Kirim pertanyaan + preview chunk ke LLM
+    // Tanya: "Apakah konteks berkaitan dengan topik pertanyaan?"
+    // Jawab TIDAK hanya jika topik berbeda total
+    // → return true/false
 }
 ```
 
-### Struktur Lengkap Prompt
+**Dua mode buildPrompt berdasarkan hasil relevance check:**
+
+| Mode | Kondisi | Perilaku |
+|---|---|---|
+| `contextRelevant = true` | Chunks topik berkaitan | Prompt menyertakan konteks dokumen, LLM wajib menjawab dari konteks |
+| `contextRelevant = false` | Chunks sama sekali tidak relevan | Prompt tanpa konteks (noContextNote), LLM jawab dari pengetahuannya atau nyatakan tidak tersedia |
+
+**Threshold relevance check yang longgar:** Sistem hanya menolak konteks yang *sama sekali* tidak berhubungan topik — bukan menolak hanya karena fakta spesifik tidak ada. Ini mencegah false negative yang menyebabkan LLM salah fallback ke "tidak tersedia".
+
+## 4.4 Konstruksi Prompt Bilingual
+
+**Implementasi:** `backend/internal/usecase/chat.go` — fungsi `buildPrompt()`
+
+Sistem mendukung dua bahasa instruksi: **Bahasa Inggris (EN)** dan **Bahasa Indonesia (ID)**.
+
+### Rules yang Diterapkan
+
+| Rule | Tujuan |
+|---|---|
+| Langsung ke isi jawaban | Anti-hedging (larang kalimat pembuka basa-basi) |
+| DILARANG sebut nama file/dokumen | Anti-attribution |
+| DILARANG sebut gambar/tabel | Mencegah referensi elemen visual yang tidak bisa ditampilkan |
+| Sebutkan lokasi UI saat menjelaskan aksi klik | Kontekstual untuk pertanyaan SIAKAD |
+| DILARANG mengarang angka/nama/prosedur | Anti-hallucination |
+| SALIN PERSIS nilai dari konteks | Mencegah paraphrase nilai spesifik (angka, URL, warna) |
+
+### Struktur Lengkap Prompt (mode contextRelevant)
 
 ```
 [SYSTEM INSTRUCTION — dalam bahasa terpilih]
-You are an academic assistant... / Kamu adalah asisten akademik...
+Kamu adalah asisten akademik Universitas Lampung (UNILA).
 STRICT RULES:
-- No opening remarks
-- No file name mentions
-- No hedging phrases
-- Unavailable → direct to Admin UPT
-- Use bullet points if listing
-- ALWAYS respond in [selected language]
+- Langsung ke isi jawaban
+- DILARANG sebut nama file/dokumen
+- DILARANG mengarang angka/nama/prosedur yang tidak ada di konteks
+- SALIN PERSIS nilai spesifik dari konteks: angka, satuan, URL, warna
+- Jika tidak ada di konteks → "Informasi ini tidak tersedia..."
+- Gunakan bullet point jika ada daftar
+- ALWAYS respond in [id/en]
 
 === CONTEXT ===
 [1] (Source: Panduan-KTI.pdf, Page 15)
 {teks chunk 1}
 
-[2] (Source: Panduan-KTI.pdf, Page 16)
+[2] (Source: Peraturan-Akademik-2025.pdf, Page 8)
 {teks chunk 2}
 ...
-[8] (Source: ...)
-{teks chunk 8}
 === END CONTEXT ===
 
 === CONVERSATION HISTORY === (jika ada)
@@ -82,29 +121,17 @@ STUDENT QUESTION: {pertanyaan mahasiswa}
 ANSWER:
 ```
 
-### Prinsip Rekayasa Prompt yang Diterapkan
+## 4.5 Atribusi Sumber PDF
 
-| Prinsip | Implementasi |
-|---|---|
-| **Role assignment** | "You are an academic assistant" / "Kamu adalah asisten akademik UNILA" |
-| **Language enforcement** | "ALWAYS respond in [en/id]" — mencegah LLM berganti bahasa |
-| **Grounding** | Jawab HANYA berdasarkan konteks yang diberikan |
-| **Format instruction** | Gunakan bullet point jika ada daftar |
-| **Anti-attribution** | Larang menyebut nama file/dokumen dalam jawaban |
-| **Anti-hedging** | Larang kalimat pembuka seperti "Berdasarkan dokumen..." |
-| **Hallucination prevention** | Jika tidak ada → arahkan ke Admin UPT |
-
-## 4.3 Atribusi Sumber PDF
-
-Meskipun LLM dilarang menyebut nama file dalam jawaban, sistem tetap menampilkan sumber di antarmuka frontend sebagai tautan yang dapat diklik langsung ke file PDF.
+Meskipun LLM dilarang menyebut nama file dalam jawaban, sistem menampilkan sumber di antarmuka frontend sebagai tautan yang dapat diklik.
 
 ```
 Backend response:
 {
   "answer": "Syarat cuti akademik adalah...",
   "sources": [
-    { "filename": "Panduan-Akademik.pdf", "page_number": 23 },
-    { "filename": "Panduan-Akademik.pdf", "page_number": 24 }
+    { "filename": "Peraturan-Akademik-2025.pdf", "page_number": 23 },
+    { "filename": "Peraturan-Akademik-2025.pdf", "page_number": 24 }
   ]
 }
 
@@ -112,61 +139,33 @@ Frontend:
 ┌─────────────────────────────────────┐
 │ Jawaban LLM (Markdown rendered)     │
 │                                     │
-│ 📄 Panduan-Akademik.pdf             │← Link ke /uploads/Panduan-Akademik.pdf
+│ 📄 Peraturan-Akademik-2025.pdf      │← Link ke /uploads/...
 └─────────────────────────────────────┘
 ```
 
-Sumber yang sama dideduplikasi di frontend (berdasarkan filename) sehingga tidak muncul tautan ganda.
+## 4.6 Manajemen Riwayat Percakapan
 
-## 4.4 Manajemen Riwayat Percakapan
-
-Sistem mendukung percakapan multi-gilir (*multi-turn conversation*). Riwayat percakapan sebelumnya disisipkan ke dalam prompt agar LLM memiliki konteks pertanyaan yang berkaitan.
+Sistem mendukung percakapan multi-gilir (*multi-turn conversation*). Riwayat disisipkan ke dalam prompt agar LLM memiliki konteks pertanyaan yang berkaitan.
 
 Riwayat disimpan di sisi frontend (state Svelte) dan dikirim bersama setiap request. Backend bersifat *stateless*.
 
-```
-Request ke /api/chat:
-{
-  "query": "Apakah boleh ambil lebih dari 24 SKS?",
-  "language": "id",
-  "history": [
-    { "role": "user",      "content": "Berapa SKS maksimal per semester?" },
-    { "role": "assistant", "content": "SKS maksimal adalah 24 SKS..." }
-  ]
-}
-```
+## 4.7 Streaming Response (Server-Sent Events)
 
-## 4.5 Fallback dan Batasan Sistem
-
-Jika tidak ada *chunk* yang relevan ditemukan, sistem mengembalikan respons standar sesuai bahasa:
-
-- **EN:** *"This information is not available. Please contact the UPT Admin."*
-- **ID:** *"Informasi ini tidak tersedia. Silakan hubungi Admin UPT."*
-
-Ini mencegah model **mengarang jawaban** (*hallucination*) yang dapat menyesatkan mahasiswa.
-
-## 4.6 Streaming Response (Server-Sent Events)
-
-Sistem mendukung streaming respons LLM token per token menggunakan **Server-Sent Events (SSE)**. Ini meningkatkan *perceived performance* secara signifikan karena pengguna langsung melihat teks muncul tanpa menunggu seluruh respons selesai dihasilkan.
-
-### Alur Streaming
+Sistem mendukung streaming respons LLM token per token menggunakan **Server-Sent Events (SSE)**:
 
 ```
 Frontend                          Backend (SSE)
    │                                    │
    ├──POST /api/chat/stream ──────────→ │
-   │                                    │ translate query (jika EN)
+   │                                    │ translate + rewrite query
    │                                    │ embed + BM25 retrieval
+   │                                    │ relevance check
    │                                    │ build prompt
    │                                    │ LLM generate (stream=true)
    │ ←── data: {"token":"Syarat"} ───── │
    │ ←── data: {"token":" cuti"} ────── │
-   │ ←── data: {"token":"..."} ──────── │  (token per token)
    │ ←── data: {"done":true,"sources":[...]} ─ │
-   │                                    │
 ```
-
-### Format Event SSE
 
 | Event | Format |
 |---|---|
@@ -174,19 +173,14 @@ Frontend                          Backend (SSE)
 | Selesai + sumber | `data: {"done": true, "sources": [...]}` |
 | Error | `data: {"error": "pesan error"}` |
 
-### Perilaku Frontend
-
-- Selama streaming: teks ditampilkan mentah (plain text) dengan kursor berkedip
-- Setelah `done` diterima: teks di-render sebagai Markdown (bold, bullet, dll.)
-- Loading dots hanya muncul saat fase retrieval (sebelum token pertama tiba)
-
 ## 4.8 Dukungan Dua LLM Provider
 
-Sistem mengimplementasikan antarmuka `LLMProvider` yang memungkinkan pertukaran provider tanpa mengubah logika bisnis (*Strategy Pattern*):
+Sistem mengimplementasikan antarmuka `LLMProvider` (*Strategy Pattern*):
 
 ```go
 type LLMProvider interface {
     GenerateCompletion(ctx, prompt) (string, error)
+    GenerateCompletionStream(ctx, prompt, onToken) error
     GenerateEmbedding(ctx, text)   ([]float32, error)
     EmbeddingDimension()            int
 }
@@ -194,9 +188,9 @@ type LLMProvider interface {
 
 | Adapter | Model Completion | Model Embedding | Dimensi |
 |---|---|---|---|
-| `OllamaAdapter` | llama3:8b-instruct-q4_K_M | nomic-embed-text | 768 |
-| `GeminiAdapter` | gemini-1.5-flash | text-embedding-004 | 768 |
+| `OllamaAdapter` | llama3:8b-instruct-q4_K_M | bge-m3 | 1024 (auto-detect) |
+| `GeminiAdapter` | gemini-2.0-flash | text-embedding-004 | 768 |
 
-Pemilihan dilakukan via environment variable `LLM_ENGINE=ollama` atau `LLM_ENGINE=gemini`.
+Dimensi embedding pada `OllamaAdapter` dideteksi otomatis saat startup — tidak hardcoded sehingga model embedding dapat diganti tanpa mengubah kode.
 
-Parameter generasi yang dikonfigurasi pada `OllamaAdapter`: `temperature: 0.3`, `top_p: 0.9` — dipilih untuk keseimbangan antara konsistensi jawaban dan variasi ekspresi yang wajar.
+Parameter generasi `OllamaAdapter`: `temperature: 0.3`, `top_p: 0.9`.

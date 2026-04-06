@@ -46,8 +46,9 @@ Sistem terdiri dari tiga lapisan utama yang mengikuti prinsip *Clean Architectur
 |---|---|---|
 | Frontend | SvelteKit + Tailwind CSS | Antarmuka pengguna bilingual |
 | Backend API | Go 1.22+ | Logika bisnis dan orkestrasi |
-| Vector Database | Qdrant | Penyimpanan dan pencarian vektor |
-| LLM Utama | Ollama + Llama 3 8B (Q4_K_M) | Generasi teks dan embedding |
+| Vector Database | Qdrant | Penyimpanan dan pencarian vektor (dense + sparse) |
+| LLM Utama | Ollama + Llama 3 8B (Q4_K_M) | Generasi teks |
+| Model Embedding | Ollama + bge-m3 | Embedding teks multibahasa (1024-dim) |
 | LLM Cadangan | Google Gemini API | Alternatif LLM berbasis cloud |
 | File Storage | Disk lokal + static server | Penyimpanan dan serving PDF |
 
@@ -57,19 +58,41 @@ Sistem memiliki dua alur kerja utama:
 
 ### Alur Ingesti Dokumen (Admin)
 ```
-Upload PDF → Ekstraksi Teks → Deteksi Boilerplate Statistik →
-Chunking → Deduplikasi Jaccard → Embedding Paralel → Simpan ke Qdrant
+Upload PDF
+    ↓
+Ekstraksi Teks per-halaman
+    ↓
+Deteksi Boilerplate Statistik (header/footer berulang)
+    ↓
+Pembersihan Noise PDF (cleanText — artefak PDF seperti "BUKU –")
+    ↓
+Chunking berbasis kata (300 char, overlap 100)
+    ↓
+Deduplikasi Jaccard (threshold 0.75)
+    ↓
+Embedding paralel bge-m3 (dense, 1024-dim) + BM25 (sparse)
+    ↓
+Simpan ke Qdrant (dense vector + sparse BM25 vector + metadata)
 ```
 
 ### Alur Chat RAG (Mahasiswa)
 ```
 Pertanyaan (+ pilihan bahasa EN/ID)
         ↓ [jika EN] translate query ke ID via LLM
-  Embedding (dense) + BM25 (sparse)
+  Query Rewriting → frasa kata kunci retrieval
         ↓
-  Qdrant RRF Fusion → Top-K Chunks
+  Embed Query bge-m3 (dense) + BM25 vectorize (sparse)
         ↓
-  Konstruksi Prompt Bilingual → LLM
+  Qdrant Hybrid Search — RRF Fusion (dense + sparse)
+        ↓
+  Top-8 Chunks
+        ↓
+  Context Relevance Check (LLM)
+        ↓ relevant          ↓ tidak relevan
+  Build Prompt           Build Prompt
+  dengan konteks         tanpa konteks (noContextNote)
+        ↓                        ↓
+  LLM Generate (Llama 3 8B)
         ↓ streaming token per token (SSE)
   Jawaban muncul bertahap di UI + Link Sumber PDF
 ```
@@ -86,3 +109,15 @@ Sistem mendukung dua bahasa secara penuh:
 | Respons LLM | Selalu Bahasa Inggris | Selalu Bahasa Indonesia |
 
 Pilihan bahasa disimpan di `localStorage` browser sehingga persisten antar sesi. Pergantian bahasa berlaku seketika tanpa *reload* halaman, memanfaatkan reaktivitas Svelte derived store.
+
+## 1.6 Dokumen yang Diindeks
+
+| Dokumen | Keterangan |
+|---|---|
+| Panduan Penulisan Karya Ilmiah 2020 | Format skripsi/tesis/disertasi |
+| Peraturan Akademik 2025 | Peraturan Rektor tentang penyelenggaraan pendidikan |
+| PANDUAN SIAKAD MAHASISWA | Panduan penggunaan sistem informasi akademik |
+| SOP 2020 | Standar Operasional Prosedur akademik |
+| Profil Program Studi 2024 | Data program studi UNILA |
+| Statistik Akreditasi UNILA 2024 | Data akreditasi program studi |
+| Panduan KKN UNILA | Panduan Kuliah Kerja Nyata |

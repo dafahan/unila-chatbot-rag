@@ -1,6 +1,6 @@
 # Bab II — Pipeline Ingesti Dokumen
 
-Pipeline ingesti adalah proses mengubah dokumen PDF menjadi representasi vektor yang dapat dicari secara semantik. Terdapat lima tahap utama.
+Pipeline ingesti adalah proses mengubah dokumen PDF menjadi representasi vektor yang dapat dicari secara semantik. Terdapat enam tahap utama.
 
 ## 2.1 Tahap 1: Ekstraksi Teks dari PDF
 
@@ -20,14 +20,15 @@ PDF (binary) → Ekstraksi per-halaman → []string (teks tiap halaman)
 - Header dan footer berulang di setiap halaman (contoh: *"Panduan Penulisan Karya Ilmiah Universitas Lampung 59"*)
 - Baris daftar isi yang berisi titik-titik panjang (*".............................. 27"*)
 - Nomor halaman berdiri sendiri
+- Prefiks artefak dari struktur buku digital (contoh: `BUKU –`)
 
-## 2.2 Tahap 2: Pembersihan Teks — Deteksi Boilerplate Statistik
+## 2.2 Tahap 2: Pembersihan Teks
 
-**Implementasi:** `backend/pkg/pdf/extract.go` — fungsi `detectBoilerplate()` dan `cleanText()`
+### 2.2.1 Deteksi Boilerplate Statistik
 
-### 2.2.1 Pendekatan Berbasis Statistik
+**Implementasi:** `backend/pkg/pdf/extract.go` — fungsi `detectBoilerplate()`
 
-Alih-alih menggunakan ekspresi reguler (*regex*) yang spesifik untuk dokumen tertentu, sistem menggunakan pendekatan **statistik lintas halaman** yang generik dan berlaku untuk dokumen PDF apapun.
+Alih-alih menggunakan ekspresi reguler (*regex*) yang spesifik untuk dokumen tertentu, sistem menggunakan pendekatan **statistik lintas halaman** yang generik.
 
 **Prinsip:** Baris teks yang muncul di lebih dari 30% halaman dokumen dianggap sebagai boilerplate (header, footer, penanda bagian berulang) dan dihapus secara otomatis.
 
@@ -44,48 +45,40 @@ Threshold = max(2, 30% × jumlah halaman)
 Jika frekuensi baris ≥ threshold → tandai sebagai boilerplate
 ```
 
-**Implementasi Go:**
-```go
-func detectBoilerplate(pages []string, threshold float64) map[string]bool {
-    linePageCount := make(map[string]int)
-    for _, page := range pages {
-        seen := make(map[string]bool)
-        for _, line := range strings.Split(page, "\n") {
-            normalized := strings.TrimSpace(line)
-            if len(normalized) < 5 { continue }
-            if !seen[normalized] {
-                linePageCount[normalized]++
-                seen[normalized] = true
-            }
-        }
-    }
-    minPages := int(float64(len(pages)) * threshold)
-    if minPages < 2 { minPages = 2 }
-    boilerplate := make(map[string]bool)
-    for line, count := range linePageCount {
-        if count >= minPages { boilerplate[line] = true }
-    }
-    return boilerplate
-}
-```
+### 2.2.2 Pembersihan Regex
 
-### 2.2.2 Pembersihan Tambahan via Regex
-
-Setelah boilerplate dihapus, regex minimal diterapkan untuk membersihkan artefak yang tersisa:
+Setelah boilerplate dihapus, regex minimal diterapkan:
 
 | Pola | Aksi |
 |---|---|
 | Baris titik-titik dari daftar isi (`\.{4,}\s*\d*`) | Dihapus |
 | Baris kosong berlebihan (`\n{3,}`) | Dinormalisasi menjadi dua baris |
 
-### 2.2.3 Keunggulan Pendekatan Statistik vs Regex Hardcoded
+### 2.2.3 Pembersihan Noise PDF (cleanText)
+
+**Implementasi:** `backend/internal/usecase/ingestion.go` — fungsi `cleanText()`
+
+Sebelum chunking, setiap halaman dibersihkan dari artefak struktural PDF yang muncul sebagai prefiks baris. Contoh kasus: panduan SIAKAD menghasilkan baris seperti `BUKU – 1.3) Tab Domisili` di mana `BUKU –` adalah artefak navigasi dokumen digital yang tidak bermakna sebagai konten.
+
+```go
+func cleanText(text string) string {
+    lines := strings.Split(text, "\n")
+    for i, line := range lines {
+        if idx := strings.Index(line, "BUKU –"); idx != -1 {
+            lines[i] = strings.TrimSpace(line[idx+len("BUKU –"):])
+        }
+    }
+    return strings.Join(lines, "\n")
+}
+```
+
+**Keunggulan pendekatan statistik vs regex hardcoded:**
 
 | Aspek | Regex Hardcoded | Statistik (digunakan) |
 |---|---|---|
 | Berlaku untuk dokumen lain | ❌ Perlu ditulis ulang | ✅ Otomatis |
 | Ketergantungan pada format spesifik | ❌ Tinggi | ✅ Tidak ada |
 | Maintenance | ❌ Perlu update tiap dokumen baru | ✅ Tidak perlu |
-| Risiko menghapus konten valid | ⚠️ Ada jika pola terlalu luas | ✅ Minimum |
 
 ## 2.3 Tahap 3: Pemecahan Teks (*Chunking*)
 
@@ -93,12 +86,14 @@ Setelah boilerplate dihapus, regex minimal diterapkan untuk membersihkan artefak
 
 Teks dibagi menjadi potongan (*chunk*) berukuran tetap dengan *overlap* untuk menjaga konteks antar-potongan.
 
-**Parameter (dapat dikonfigurasi via `.env`):**
+**Parameter (dikonfigurasi via `.env`):**
 
-| Parameter | Nilai Default | Keterangan |
+| Parameter | Nilai | Keterangan |
 |---|---|---|
-| `CHUNK_SIZE` | 512 karakter | Target ukuran setiap *chunk* |
-| `CHUNK_OVERLAP` | 64 karakter | Karakter yang diulang antar-*chunk* bersebelahan |
+| `CHUNK_SIZE` | 300 karakter | Target ukuran setiap *chunk* |
+| `CHUNK_OVERLAP` | 100 karakter | Karakter yang diulang antar-*chunk* bersebelahan |
+
+Chunk yang lebih kecil (300 vs 512 sebelumnya) menghasilkan representasi vektor yang lebih presisi per topik, mengurangi noise semantik dalam satu chunk.
 
 **Mekanisme *overlap*:**
 ```
@@ -107,27 +102,45 @@ Chunk 2:                          [====== ... ============]
                                   ↑ Overlap zona
 ```
 
-*Overlap* mencegah informasi penting yang berada di batas antar-*chunk* menjadi terpotong dan tidak terjawab.
-
 ## 2.4 Tahap 4: Deduplikasi *Chunk*
 
 **Implementasi:** `backend/internal/usecase/ingestion.go` — fungsi `deduplicateChunks()`
 
-Dokumen akademik seringkali mengandung teks yang hampir identik di beberapa lokasi (contoh: prakata dari berbagai edisi revisi yang mengulang kalimat yang sama). *Chunk* duplikat menyebabkan hasil pencarian didominasi oleh konten yang serupa.
+Dokumen akademik seringkali mengandung teks yang hampir identik di beberapa lokasi. *Chunk* duplikat menyebabkan hasil pencarian didominasi oleh konten yang serupa.
 
 **Metode:** Kemiripan Jaccard (*Jaccard Similarity*) pada himpunan kata:
 
 $$J(A, B) = \frac{|A \cap B|}{|A \cup B|}$$
 
-Di mana $A$ dan $B$ adalah himpunan kata dari dua *chunk*. Jika $J > 0.75$, *chunk* dianggap duplikat dan dibuang.
+Jika $J > 0.75$, *chunk* dianggap duplikat dan dibuang.
 
-**Contoh:** Prakata edisi ke-2 dan ke-3 yang sama-sama menyebut "format umum yang dapat memayungi seluruh bidang ilmu" memiliki Jaccard > 0.75 sehingga hanya satu yang disimpan.
-
-## 2.5 Tahap 5: Pembuatan Embedding dan Penyimpanan
+## 2.5 Tahap 5: Pembuatan Embedding dan BM25
 
 **Implementasi:** `backend/internal/usecase/ingestion.go` (paralel) + `backend/internal/repository/qdrant.go`
 
-Setiap *chunk* dikonversi menjadi vektor numerik berdimensi 768 menggunakan model embedding `nomic-embed-text` via Ollama.
+Setiap *chunk* dikonversi ke dua representasi vektor:
+
+### Dense Vector (Semantic)
+Model embedding `bge-m3` via Ollama menghasilkan vektor berdimensi **1024**. Dimensi dideteksi otomatis saat startup dengan melakukan probe embedding — tidak hardcoded sehingga fleksibel saat ganti model.
+
+```go
+func NewOllamaAdapter(baseURL, model, embedModel string) (*OllamaAdapter, error) {
+    a := &OllamaAdapter{...}
+    vec, err := a.GenerateEmbedding(context.Background(), "test")
+    a.dimension = len(vec)  // auto-detect, bukan hardcode
+    return a, nil
+}
+```
+
+**Keunggulan bge-m3 vs nomic-embed-text:**
+- Dimensi lebih tinggi (1024 vs 768) → representasi lebih kaya
+- Dioptimalkan untuk teks multibahasa termasuk Bahasa Indonesia
+- Retrieval recall lebih baik untuk query semantik
+
+### Sparse Vector (BM25 Lexical)
+Selain dense vector, setiap chunk juga divektorisasi menggunakan **BM25** (Best Match 25) — algoritma pencarian berbasis frekuensi kata yang diimplementasikan secara custom (`backend/pkg/bm25/index.go`).
+
+BM25 menghasilkan sparse vector berisi pasangan `(indeks_kata, bobot_tf_idf)` yang hanya berisi kata-kata yang muncul dalam chunk tersebut.
 
 **Pemrosesan paralel dengan worker pool:**
 ```
@@ -143,19 +156,20 @@ Chunks → [Worker 1] ─┐
 | Field | Tipe | Keterangan |
 |---|---|---|
 | `id` | UUID | Identifier unik titik |
-| `vector` | float32[768] | Representasi semantik *chunk* |
+| `vector.dense` | float32[1024] | Representasi semantik bge-m3 |
+| `vector.bm25` | sparse float32 | Representasi leksikal BM25 |
 | `payload.text` | string | Teks asli *chunk* |
 | `payload.filename` | string | Nama file PDF sumber |
 | `payload.document_id` | UUID | Identifier dokumen |
 | `payload.page` | int | Nomor halaman |
 
-**Metrik jarak:** Cosine Similarity — dipilih karena efektif untuk mengukur kemiripan semantik antar vektor teks.
+**Metrik jarak:** Cosine Similarity untuk dense vector.
 
 ## 2.6 Penyimpanan File PDF
 
 **Implementasi:** `backend/internal/handler/document.go`
 
-Selain data vektor di Qdrant, file PDF asli disimpan ke disk untuk keperluan atribusi sumber. Saat mahasiswa menerima jawaban, tautan ke halaman PDF asli disertakan.
+File PDF asli disimpan ke disk untuk keperluan atribusi sumber.
 
 ```
 Upload PDF
@@ -166,5 +180,3 @@ Upload PDF
 
 Serving statis: GET /uploads/{filename} → file PDF
 ```
-
-Direktori upload dikonfigurasi via environment variable `UPLOAD_DIR` (default: `./uploads`).

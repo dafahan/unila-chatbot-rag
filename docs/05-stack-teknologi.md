@@ -23,10 +23,14 @@
 
 **Justifikasi:**
 - Open-source, dapat di-*self-host* tanpa biaya lisensi
-- Mendukung cosine similarity, dot product, dan Euclidean distance
+- Mendukung **hybrid search** — dense vector + sparse vector dalam satu query dengan RRF fusion
 - Payload filtering — memungkinkan filter berdasarkan metadata (nama file, dll.) untuk operasi delete per-dokumen
 - Web UI bawaan di `/dashboard` untuk monitoring tanpa tools tambahan
-- Mendukung sparse vector untuk hybrid search BM25-native di masa depan
+- Sparse vector API (BM25) sudah aktif digunakan dalam sistem
+
+**Koleksi Qdrant yang digunakan:**
+- Dense vector: `bge-m3` (1024-dim, Cosine Similarity)
+- Sparse vector: `bm25` (variable-dim, dot product)
 
 **Alternatif yang dipertimbangkan:** Milvus (lebih kompleks), Weaviate (konsumsi RAM lebih tinggi), pgvector (kurang optimal untuk pencarian murni vektor).
 
@@ -48,21 +52,37 @@
 | `temperature` | 0.3 | Cukup deterministik untuk informasi akademik, tidak kaku |
 | `top_p` | 0.9 | Mempertahankan variasi ekspresi yang wajar |
 
-**Model Embedding:** `nomic-embed-text`
-- Ukuran: 274 MB
-- Dimensi: 768
-- Dioptimalkan untuk pencarian semantik dokumen
+## 5.4 Model Embedding: bge-m3
 
-## 5.4 LLM Cadangan: Google Gemini API
+**Model:** `bge-m3` via Ollama
+**Dimensi:** 1024 (auto-detect saat startup)
+**Ukuran:** ~1.2 GB
 
-**Model:** `gemini-1.5-flash` (completion), `text-embedding-004` (embedding)
+**Justifikasi:**
+- Didesain untuk teks multibahasa — performa retrieval Bahasa Indonesia jauh lebih baik dibanding `nomic-embed-text`
+- Dimensi lebih tinggi (1024 vs 768) menghasilkan representasi semantik yang lebih kaya
+- State-of-the-art untuk tugas retrieval multibahasa
+
+**Perbandingan dengan alternatif:**
+
+| Model | Dimensi | Bahasa Indonesia | Ukuran |
+|---|---|---|---|
+| nomic-embed-text (sebelumnya) | 768 | ⚠️ Terbatas | 274 MB |
+| **bge-m3 (digunakan)** | **1024** | **✅ Baik** | **1.2 GB** |
+| multilingual-e5-large | 1024 | ✅ Baik | ~1.2 GB |
+
+**Auto-detect dimensi:** `OllamaAdapter` melakukan probe embedding saat startup dan menggunakan dimensi aktual dari model, sehingga tidak perlu hardcode — model embedding dapat diganti hanya dengan mengubah `OLLAMA_EMBED_MODEL` di `.env` dan meng-recreate koleksi Qdrant.
+
+## 5.5 LLM Cadangan: Google Gemini API
+
+**Model:** `gemini-2.0-flash` (completion), `text-embedding-004` (embedding)
 
 **Justifikasi:**
 - Sebagai fallback jika Ollama tidak tersedia atau untuk evaluasi perbandingan
-- `gemini-1.5-flash` memiliki kemampuan Bahasa Indonesia dan Bahasa Inggris yang sangat baik
-- Dimensi embedding sama (768) — koleksi Qdrant tidak perlu dibuat ulang saat berganti provider
+- `gemini-2.0-flash` memiliki kemampuan Bahasa Indonesia dan Bahasa Inggris yang sangat baik
+- Aktivasi cukup dengan mengubah `LLM_ENGINE=gemini` di `.env`
 
-## 5.5 Frontend: SvelteKit
+## 5.6 Frontend: SvelteKit
 
 **Versi:** SvelteKit 2.x, Svelte 5.x, Vite 7.x
 **Runtime:** Bun
@@ -71,29 +91,31 @@
 **Justifikasi:**
 - Svelte 5 dengan *runes* (`$state`, `$derived`) — reaktivitas yang lebih efisien dan eksplisit
 - SvelteKit mendukung SSR dan SPA dalam satu framework
-- Bundle size minimal dibanding React/Next.js — penting untuk server dengan bandwidth terbatas
-- Tailwind CSS untuk styling cepat tanpa CSS custom yang berlebihan
+- Bundle size minimal dibanding React/Next.js
+- Tailwind CSS untuk styling cepat
 
-**Sistem i18n (Internasionalisasi):**
-
-Sistem bahasa diimplementasikan menggunakan Svelte stores tanpa pustaka eksternal:
-
+**Sistem i18n:**
 ```typescript
-// src/lib/i18n.ts
-export const lang = writable<Lang>(stored ?? 'en');  // persisten via localStorage
+export const lang = writable<Lang>(stored ?? 'en');
 export const t = derived(lang, $lang => translations[$lang]);
 export function toggleLang() { lang.update(l => l === 'en' ? 'id' : 'en'); }
 ```
 
-- `lang` — writable store, nilai aktif `'en'` atau `'id'`, disimpan ke `localStorage`
-- `t` — derived store berisi seluruh string terjemahan yang aktif (reaktif)
-- Toggle berlaku seketika di semua komponen tanpa *reload*
-- Pilihan bahasa juga dikirim ke backend (`language` field di request) sehingga respons LLM menggunakan bahasa yang sama
-
 **Pustaka Tambahan:**
-- `marked` — rendering Markdown pada respons LLM (bullet point, penomoran, bold)
+- `marked` — rendering Markdown pada respons LLM
 
-## 5.6 Infrastruktur
+## 5.7 Evaluasi: RAGAS
+
+**Versi:** ragas 0.2.6
+**Evaluator LLM:** Groq API (llama-3.1-8b-instant) via OpenAI-compatible endpoint
+**Embedding evaluasi:** Jina AI API (jina-embeddings-v3)
+
+**Metrik yang diukur:**
+- `faithfulness` — seberapa setia jawaban terhadap konteks yang diberikan
+- `context_precision` — seberapa presisi chunk yang di-retrieve
+- `context_recall` — seberapa lengkap konteks yang ditemukan
+
+## 5.8 Infrastruktur
 
 | Komponen | Teknologi | Keterangan |
 |---|---|---|
@@ -101,15 +123,26 @@ export function toggleLang() { lang.update(l => l === 'en' ? 'id' : 'en'); }
 | Ollama | Native install (systemd/daemon) | Langsung di host OS |
 | Backend | Go binary via `air` (dev) | Live reload saat development |
 | Environment | `.env` file + `godotenv` | Konfigurasi terpusat |
-| File Storage | Disk lokal + Go static server | PDF di `./uploads/`, serving di `/uploads/` |
+| File Storage | Disk lokal + Go static server | PDF di `./uploads/` |
 
-## 5.7 Ringkasan Dependensi Backend (Go)
+## 5.9 Ringkasan Dependensi Backend (Go)
 
-| Pustaka | Versi | Fungsi |
+| Pustaka | Fungsi |
+|---|---|
+| `github.com/qdrant/go-client` | Klien gRPC Qdrant |
+| `github.com/google/generative-ai-go` | SDK Google Gemini |
+| `github.com/ledongthuc/pdf` | Ekstraksi teks PDF |
+| `github.com/joho/godotenv` | Load file .env |
+| `github.com/google/uuid` | Generate UUID |
+| `google.golang.org/grpc` | Komunikasi gRPC ke Qdrant |
+
+## 5.10 Konfigurasi RAG (`.env`)
+
+| Variable | Nilai | Keterangan |
 |---|---|---|
-| `github.com/qdrant/go-client` | v1.17.1 | Klien gRPC Qdrant |
-| `github.com/google/generative-ai-go` | v0.20.1 | SDK Google Gemini |
-| `github.com/ledongthuc/pdf` | latest | Ekstraksi teks PDF |
-| `github.com/joho/godotenv` | v1.5.1 | Load file .env |
-| `github.com/google/uuid` | v1.6.0 | Generate UUID |
-| `google.golang.org/grpc` | v1.79.3 | Komunikasi gRPC ke Qdrant |
+| `OLLAMA_EMBED_MODEL` | `bge-m3` | Model embedding |
+| `OLLAMA_MODEL` | `llama3:8b-instruct-q4_K_M` | Model LLM |
+| `CHUNK_SIZE` | `300` | Ukuran chunk dalam karakter |
+| `CHUNK_OVERLAP` | `100` | Overlap antar chunk |
+| `TOP_K` | `8` | Jumlah chunk yang diambil per query |
+| `SCORE_THRESHOLD` | `0.06` | Skor minimum untuk chunk yang dikembalikan |
