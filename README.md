@@ -7,11 +7,13 @@ Built with Go, SvelteKit, Qdrant, and Ollama (Llama 3 8B). Supports bilingual re
 ## Features
 
 - **Upload PDFs** — admin uploads official university documents
-- **Semantic search** — hybrid vector + keyword boost retrieval
-- **Accurate answers** — grounded in uploaded documents, no hallucination
-- **Source links** — each answer links back to the original PDF
-- **Bilingual** — full EN/ID toggle; English queries are translated to Indonesian before retrieval
-- **Streaming** — responses stream token by token via SSE (no waiting for full response)
+- **Hybrid search** — dense vector (bge-m3, 1024-dim) + BM25 sparse vector with RRF fusion
+- **Query rewriting** — LLM rewrites query to document-style keywords before retrieval
+- **Relevance guardrail** — context relevance check prevents LLM from hallucinating when retrieval misses
+- **Accurate answers** — grounded in uploaded documents; specific values copied verbatim from context
+- **Source links** — each answer links back to the original PDF page
+- **Bilingual** — full EN/ID toggle; English queries translated to Indonesian before retrieval
+- **Streaming** — responses stream token by token via SSE
 - **Multi-turn chat** — conversation history maintained on the client
 - **Self-hosted** — runs entirely on local campus infrastructure
 
@@ -24,7 +26,7 @@ Built with Go, SvelteKit, Qdrant, and Ollama (Llama 3 8B). Supports bilingual re
 | Vector DB | Qdrant (Docker) |
 | LLM (local) | Ollama + Llama 3 8B Q4_K_M |
 | LLM (fallback) | Google Gemini API |
-| Embedding | nomic-embed-text (768-dim) |
+| Embedding | bge-m3 (1024-dim, multilingual) |
 
 ## Prerequisites
 
@@ -45,7 +47,7 @@ docker compose up -d
 
 ```bash
 ollama pull llama3:8b-instruct-q4_K_M
-ollama pull nomic-embed-text
+ollama pull bge-m3
 ```
 
 ### 3. Configure backend
@@ -63,15 +65,16 @@ LLM_ENGINE=ollama          # or "gemini"
 
 OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3:8b-instruct-q4_K_M
-OLLAMA_EMBED_MODEL=nomic-embed-text
+OLLAMA_EMBED_MODEL=bge-m3
 
 QDRANT_HOST=localhost
 QDRANT_PORT=6334
 QDRANT_COLLECTION=unila_docs
 
-CHUNK_SIZE=512
-CHUNK_OVERLAP=64
-TOP_K=5
+CHUNK_SIZE=300
+CHUNK_OVERLAP=100
+TOP_K=8
+SCORE_THRESHOLD=0.06
 ```
 
 To use Gemini instead:
@@ -149,7 +152,8 @@ unila-ai/
 │   │   └── usecase/      # Business logic (chat, ingestion)
 │   └── pkg/
 │       ├── config/       # Environment configuration
-│       └/pdf/            # PDF extraction and cleaning
+│       ├── bm25/         # BM25 sparse vector implementation
+│       └── pdf/          # PDF extraction and cleaning
 ├── frontend/
 │   └── src/
 │       ├── lib/          # api.ts, i18n.ts
@@ -168,3 +172,15 @@ Academic documentation in Indonesian is in the [`docs/`](docs/) folder:
 4. [RAG Flow & Prompt Engineering](docs/04-rag-flow.md)
 5. [Technology Stack](docs/05-stack-teknologi.md)
 6. [Implementation Stages](docs/06-implementasi-tahapan.md)
+7. [RAGAS Evaluation](docs/07-evaluasi-ragas.md)
+
+## Evaluation Results (RAGAS)
+
+| Metric | Score |
+|---|---|
+| Faithfulness | **0.9833** |
+| Context Recall | **0.8849** |
+| Context Precision | **0.7890** |
+| **Overall** | **0.8858** |
+
+Evaluated on 22 questions across 5 official UNILA documents using RAGAS 0.2.6.
