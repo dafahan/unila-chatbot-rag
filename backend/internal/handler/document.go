@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/dafahan/unila-ai/internal/domain"
 	"github.com/dafahan/unila-ai/internal/usecase"
@@ -42,23 +43,33 @@ func (h *DocumentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Simpan PDF ke disk
+	// Simpan file ke disk
 	dst := filepath.Join(h.uploadDir, filepath.Base(header.Filename))
 	if err := os.WriteFile(dst, raw, 0644); err != nil {
 		writeError(w, http.StatusInternalServerError, "save file error")
 		return
 	}
 
-	pages, err := pdfextract.ExtractPages(raw)
-	if err != nil {
-		writeError(w, http.StatusUnprocessableEntity, fmt.Sprintf("pdf extract: %v", err))
-		return
-	}
-
-	count, err := h.uc.IngestPages(r.Context(), header.Filename, pages)
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
+	var count int
+	ext := strings.ToLower(filepath.Ext(header.Filename))
+	switch ext {
+	case ".md", ".txt":
+		count, err = h.uc.IngestText(r.Context(), header.Filename, string(raw))
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	default: // .pdf
+		pages, err := pdfextract.ExtractPages(raw)
+		if err != nil {
+			writeError(w, http.StatusUnprocessableEntity, fmt.Sprintf("pdf extract: %v", err))
+			return
+		}
+		count, err = h.uc.IngestPages(r.Context(), header.Filename, pages)
+		if err != nil {
+			writeError(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{
