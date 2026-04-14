@@ -1,0 +1,29 @@
+question,faithfulness,context_precision,context_recall
+Berapa persentase kehadiran minimal mahasiswa untuk dapat mengikuti Ujian Akhir Semester (UAS) di UNILA?,0.6666666666666666,0.99999999995,1.0
+Berapa IPK minimal yang harus dicapai mahasiswa program Sarjana (S1) untuk dinyatakan lulus di UNILA?,1.0,0.33333333331666665,1.0
+Berapa beban SKS maksimal yang dapat diambil mahasiswa S1 pada semester 1 dan 2 di UNILA?,1.0,0.49999999995,1.0
+Berapa persen keringanan UKT yang diberikan kepada mahasiswa S1 yang telah lulus ujian seminar hasil (seminar II)?,1.0,0.5888888888692593,1.0
+Berapa denda keterlambatan pembayaran UKT per bulan untuk mahasiswa program Sarjana (S1) di UNILA?,1.0,0.46666666665111106,1.0
+Apa sanksi bagi mahasiswa UNILA yang tidak membayar UKT minimal 2 semester berturut-turut tanpa surat keterangan cuti akademik?,1.0,0.7555555555303703,1.0
+Berapa besaran UKT kelompok 1 untuk seluruh program studi di Universitas Lampung tahun akademik 2025/2026?,0.5,0.3333333333,1.0
+Berapa UKT tertinggi (kelompok 8) untuk program Pendidikan Dokter di Universitas Lampung tahun akademik 2025/2026?,,0.8333333332916666,1.0
+Berapa besaran IPI 1 untuk program Pendidikan Dokter (Ilmu Kedokteran) di UNILA tahun akademik 2025/2026?,,0.5888888888692593,1.0
+Apa itu IPI dan kapan mahasiswa jalur Seleksi Mandiri UNILA wajib membayarnya?,1.0,0.9379251700546282,1.0
+Apa saja jalur Seleksi Mandiri penerimaan mahasiswa baru program Diploma dan Sarjana di UNILA?,1.0,0.49999999995,1.0
+Apa yang terjadi jika calon mahasiswa UNILA jalur Seleksi Mandiri tidak membayar IPI dalam batas waktu yang ditetapkan?,0.5,0.8333333332916666,1.0
+Apa saja jenis sanksi yang dapat dijatuhkan kepada warga UNILA yang melanggar tata pergaulan kampus?,0.4,0.0,0.0
+Pelanggaran apa saja yang dapat dikenakan sanksi menurut Keputusan Rektor UNILA No. 359 Tahun 2012 tentang Tata Pergaulan?,1.0,0.9999999999,0.3333333333333333
+Berapa kali dalam satu semester kegiatan penyusunan Laporan PDDIKTI dilaksanakan di UNILA?,,0.94999999997625,1.0
+Dokumen apa yang harus dibawa mahasiswa untuk mengajukan perbaikan biodata di SIAKAD melalui Biro Akademik dan Kemahasiswaan (BAK) UNILA?,1.0,0.99999999995,1.0
+"Berapa ukuran kertas yang digunakan untuk penulisan karya ilmiah (skripsi, tesis, disertasi) di Universitas Lampung?",1.0,0.8333333332916666,1.0
+Berapa ukuran huruf dan jenis font yang digunakan untuk teks isi skripsi di Universitas Lampung?,1.0,0.99999999995,1.0
+Warna tinta apa yang digunakan untuk tulisan pada sampul (kulit) skripsi di Universitas Lampung?,1.0,0.8333333332916666,1.0
+Apa alamat website untuk mengakses SIAKAD Universitas Lampung?,,0.5833333333041666,1.0
+Apa saja yang dibutuhkan untuk login ke SIAKAD UNILA?,0.6,0.46666666665111106,1.0
+Apa saja fitur yang tersedia di Menu Perkuliahan SIAKAD Universitas Lampung?,1.0,0.9999999999,1.0
+Bagaimana cara mendaftar KKN di Universitas Lampung?,1.0,0.42063492062089947,1.0
+Apa yang disampaikan saat orientasi KKN di Universitas Lampung?,1.0,0.8874999999778125,1.0
+"Menurut Peraturan Rektor UNILA No. 23 Tahun 2020, kepada mahasiswa mana saja IPI dapat dibebankan?",,0.49999999995,1.0
+Apa yang dapat diajukan mahasiswa UNILA jika mengalami penurunan kemampuan ekonomi akibat bencana alam menurut Peraturan Rektor No. 23 Tahun 2020?,0.8333333333333334,0.8303571428363838,0.5
+Berapa jumlah semester dalam satu tahun akademik di Universitas Lampung dan kapan masing-masing dimulai?,1.0,0.7499999999625,1.0
+Berapa SKS maksimal yang dapat diambil mahasiswa pada semester antara di Universitas Lampung?,0.6666666666666666,0.49999999995,1.0

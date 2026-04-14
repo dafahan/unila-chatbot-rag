@@ -30,7 +30,8 @@ class GroqChatOpenAI(ChatOpenAI):
 
 API_URL = os.getenv("API_URL", "http://localhost:8080/api/chat")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
-GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+GROQ_MODEL   = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+GROQ_EVAL_MODEL = os.getenv("GROQ_EVAL_MODEL", "llama-3.3-70b-versatile")
 DATASET_FILE = os.getenv("DATASET_FILE", "eval_dataset.json")
 
 METRIC_NAMES = ["faithfulness", "answer_relevancy", "context_precision", "context_recall"]
@@ -136,7 +137,9 @@ SCORES_CACHE_FILE = "scores_cache.json"
 def load_cache() -> dict:
     if os.path.exists(CACHE_FILE):
         with open(CACHE_FILE) as f:
-            return json.load(f)
+            content = f.read().strip()
+            if content:
+                return json.loads(content)
     return {}
 
 def save_cache(cache: dict):
@@ -146,7 +149,9 @@ def save_cache(cache: dict):
 def load_scores_cache() -> dict:
     if os.path.exists(SCORES_CACHE_FILE):
         with open(SCORES_CACHE_FILE) as f:
-            return json.load(f)
+            content = f.read().strip()
+            if content:
+                return json.loads(content)
     return {}
 
 def save_scores_cache(scores: dict):
@@ -189,7 +194,7 @@ def main():
         GroqChatOpenAI(
             api_key=GROQ_API_KEY,
             base_url="https://api.groq.com/openai/v1",
-            model=GROQ_MODEL,
+            model=GROQ_EVAL_MODEL,   # larger model for reliable structured output
             max_tokens=2048,
         ),
         is_finished_parser=lambda _: True,

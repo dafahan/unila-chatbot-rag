@@ -10,15 +10,18 @@ type Config struct {
 	Port      string
 	UploadDir string
 
-	LLMEngine string // "ollama" or "gemini"
+	LLMEngine string // "ollama", "gemini", or "groq"
 
 	OllamaBaseURL    string
 	OllamaModel      string
 	OllamaEmbedModel string
 
-	GeminiAPIKey    string
-	GeminiModel     string
+	GeminiAPIKey     string
+	GeminiModel      string
 	GeminiEmbedModel string
+
+	GroqAPIKey string
+	GroqModel  string
 
 	QdrantHost       string
 	QdrantPort       int
@@ -44,6 +47,10 @@ func Load() *Config {
 		GeminiAPIKey:     getEnv("GEMINI_API_KEY", ""),
 		GeminiModel:      getEnv("GEMINI_MODEL", "gemini-1.5-flash"),
 		GeminiEmbedModel: getEnv("GEMINI_EMBED_MODEL", "text-embedding-004"),
+
+		GroqAPIKey: getEnv("GROQ_API_KEY", ""),
+		GroqModel:  getEnv("GROQ_MODEL", "llama-3.3-70b-versatile"),
+		// Groq uses OllamaEmbedModel + OllamaBaseURL for bge-m3 embedding.
 
 		QdrantHost:       getEnv("QDRANT_HOST", "localhost"),
 		QdrantPort:       getEnvInt("QDRANT_PORT", 6334),

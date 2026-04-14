@@ -1,0 +1,195 @@
+======================================================================
+  UNILA AI — RAGAS Evaluation Report
+  Generated : 2026-04-14 13:27:02
+  Model     : llama-3.1-8b-instant
+  Dataset   : eval_dataset.json  (28 questions)
+======================================================================
+
+📋 PER-QUESTION SCORES
+
+[01] Berapa persentase kehadiran minimal mahasiswa untuk dapat mengikuti Ujian Akhir Semester (UAS) di UNILA?
+     Source : Peraturan-Akademik-Nomor-12-Tahun-2025.md
+     Answer : ...
+     Scores : faithfulness: 0.67 ⚠️ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 1.00 ✅
+
+[02] Berapa IPK minimal yang harus dicapai mahasiswa program Sarjana (S1) untuk dinyatakan lulus di UNILA?
+     Source : Peraturan-Akademik-Nomor-12-Tahun-2025.md
+     Answer : ...
+     Scores : faithfulness: 0.40 ❌ | answer_relevancy: N/A | context_precision: 0.00 ❌ | context_recall: 0.00 ❌
+
+[03] Berapa beban SKS maksimal yang dapat diambil mahasiswa S1 pada semester 1 dan 2 di UNILA?
+     Source : Peraturan-Akademik-Nomor-12-Tahun-2025.md
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.50 ❌ | context_recall: 1.00 ✅
+
+[04] Berapa persen keringanan UKT yang diberikan kepada mahasiswa S1 yang telah lulus ujian seminar hasil (seminar II)?
+     Source : SK-355-Keringanan-Pembebasan-Sanksi-UKT.md
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.59 ⚠️ | context_recall: 1.00 ✅
+
+[05] Berapa denda keterlambatan pembayaran UKT per bulan untuk mahasiswa program Sarjana (S1) di UNILA?
+     Source : SK-355-Keringanan-Pembebasan-Sanksi-UKT.md
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.47 ❌ | context_recall: 1.00 ✅
+
+[06] Apa sanksi bagi mahasiswa UNILA yang tidak membayar UKT minimal 2 semester berturut-turut tanpa surat keterangan cuti akademik?
+     Source : SK-355-Keringanan-Pembebasan-Sanksi-UKT.md
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.76 ✅ | context_recall: 1.00 ✅
+
+[07] Berapa besaran UKT kelompok 1 untuk seluruh program studi di Universitas Lampung tahun akademik 2025/2026?
+     Source : SK-2661-Tarif-UKT-2025-2026.md
+     Answer : ...
+     Scores : faithfulness: 0.50 ⚠️ | answer_relevancy: N/A | context_precision: 0.00 ❌ | context_recall: 0.00 ❌
+
+[08] Berapa UKT tertinggi (kelompok 8) untuk program Pendidikan Dokter di Universitas Lampung tahun akademik 2025/2026?
+     Source : SK-2661-Tarif-UKT-2025-2026.md
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.83 ✅ | context_recall: 1.00 ✅
+
+[09] Berapa besaran IPI 1 untuk program Pendidikan Dokter (Ilmu Kedokteran) di UNILA tahun akademik 2025/2026?
+     Source : SK-2662-Tarif-IPI-2025-2026.md
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.59 ⚠️ | context_recall: 1.00 ✅
+
+[10] Apa itu IPI dan kapan mahasiswa jalur Seleksi Mandiri UNILA wajib membayarnya?
+     Source : SK-2662-Tarif-IPI-2025-2026.md
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.94 ✅ | context_recall: 1.00 ✅
+
+[11] Apa saja jalur Seleksi Mandiri penerimaan mahasiswa baru program Diploma dan Sarjana di UNILA?
+     Source : Peraturan-Rektor-No-1-Tahun-2024-Seleksi-Mandiri.md
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.50 ❌ | context_recall: 1.00 ✅
+
+[12] Apa yang terjadi jika calon mahasiswa UNILA jalur Seleksi Mandiri tidak membayar IPI dalam batas waktu yang ditetapkan?
+     Source : Peraturan-Rektor-No-1-Tahun-2024-Seleksi-Mandiri.md
+     Answer : ...
+     Scores : faithfulness: 0.50 ⚠️ | answer_relevancy: N/A | context_precision: 0.83 ✅ | context_recall: 1.00 ✅
+
+[13] Apa saja jenis sanksi yang dapat dijatuhkan kepada warga UNILA yang melanggar tata pergaulan kampus?
+     Source : Keputusan-Rektor-No-359-Tata-Pergaulan-Warga.md
+     Answer : ...
+     Scores : faithfulness: 0.60 ⚠️ | answer_relevancy: N/A | context_precision: 0.00 ❌ | context_recall: 0.00 ❌
+
+[14] Pelanggaran apa saja yang dapat dikenakan sanksi menurut Keputusan Rektor UNILA No. 359 Tahun 2012 tentang Tata Pergaulan?
+     Source : Keputusan-Rektor-No-359-Tata-Pergaulan-Warga.md
+     Answer : ...
+     Scores : faithfulness: 0.86 ✅ | answer_relevancy: N/A | context_precision: 0.62 ⚠️ | context_recall: 0.00 ❌
+
+[15] Berapa kali dalam satu semester kegiatan penyusunan Laporan PDDIKTI dilaksanakan di UNILA?
+     Source : SOP-BAK-UNILA.md
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.95 ✅ | context_recall: 1.00 ✅
+
+[16] Dokumen apa yang harus dibawa mahasiswa untuk mengajukan perbaikan biodata di SIAKAD melalui Biro Akademik dan Kemahasiswaan (BAK) UNILA?
+     Source : SOP-BAK-UNILA.md
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 1.00 ✅
+
+[17] Berapa ukuran kertas yang digunakan untuk penulisan karya ilmiah (skripsi, tesis, disertasi) di Universitas Lampung?
+     Source : Panduan-Penulisan-Karya-Ilmiah-2020.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.83 ✅ | context_recall: 1.00 ✅
+
+[18] Berapa ukuran huruf dan jenis font yang digunakan untuk teks isi skripsi di Universitas Lampung?
+     Source : Panduan-Penulisan-Karya-Ilmiah-2020.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 1.00 ✅
+
+[19] Warna tinta apa yang digunakan untuk tulisan pada sampul (kulit) skripsi di Universitas Lampung?
+     Source : Panduan-Penulisan-Karya-Ilmiah-2020.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.83 ✅ | context_recall: 1.00 ✅
+
+[20] Apa alamat website untuk mengakses SIAKAD Universitas Lampung?
+     Source : PANDUAN-SIAKAD-MAHASISWA.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.58 ⚠️ | context_recall: 1.00 ✅
+
+[21] Apa saja yang dibutuhkan untuk login ke SIAKAD UNILA?
+     Source : PANDUAN-SIAKAD-MAHASISWA.pdf
+     Answer : ...
+     Scores : faithfulness: 0.60 ⚠️ | answer_relevancy: N/A | context_precision: 0.47 ❌ | context_recall: 1.00 ✅
+
+[22] Apa saja fitur yang tersedia di Menu Perkuliahan SIAKAD Universitas Lampung?
+     Source : PANDUAN-SIAKAD-MAHASISWA.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 1.00 ✅
+
+[23] Bagaimana cara mendaftar KKN di Universitas Lampung?
+     Source : kkn_unila.ac.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.42 ❌ | context_recall: 1.00 ✅
+
+[24] Apa yang disampaikan saat orientasi KKN di Universitas Lampung?
+     Source : kkn_unila.ac.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.89 ✅ | context_recall: 1.00 ✅
+
+[25] Menurut Peraturan Rektor UNILA No. 23 Tahun 2020, kepada mahasiswa mana saja IPI dapat dibebankan?
+     Source : Peraturan-Rektor-No-23-Tahun-2020-UKT-IPI.md
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.50 ❌ | context_recall: 1.00 ✅
+
+[26] Apa yang dapat diajukan mahasiswa UNILA jika mengalami penurunan kemampuan ekonomi akibat bencana alam menurut Peraturan Rektor No. 23 Tahun 2020?
+     Source : Peraturan-Rektor-No-23-Tahun-2020-UKT-IPI.md
+     Answer : ...
+     Scores : faithfulness: 0.83 ✅ | answer_relevancy: N/A | context_precision: 0.83 ✅ | context_recall: 0.50 ⚠️
+
+[27] Berapa jumlah semester dalam satu tahun akademik di Universitas Lampung dan kapan masing-masing dimulai?
+     Source : Peraturan-Akademik-Nomor-12-Tahun-2025.md
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 0.00 ❌
+
+[28] Apa saja jenis dosen yang diakui di Universitas Lampung menurut Peraturan Akademik?
+     Source : Peraturan-Akademik-Nomor-12-Tahun-2025.md
+     Answer : ...
+     Scores : faithfulness: 0.00 ❌ | answer_relevancy: N/A | context_precision: 0.00 ❌ | context_recall: 0.00 ❌
+
+======================================================================
+📊 AGGREGATE SCORES
+
+  faithfulness        0.8242  [████████████████████████░░░░░░] ✅
+  context_precision   0.6405  [███████████████████░░░░░░░░░░░] ⚠️
+  context_recall      0.7679  [███████████████████████░░░░░░░] ✅
+
+  Overall Average     0.7442  ⚠️
+
+======================================================================
+📁 SCORES BY SOURCE DOCUMENT
+
+  Peraturan-Akademik-Nomor-12-Tahun-2025.md
+    faithfulness: 0.61 | context_precision: 0.50 | context_recall: 0.40
+
+  SK-355-Keringanan-Pembebasan-Sanksi-UKT.md
+    faithfulness: 1.00 | context_precision: 0.60 | context_recall: 1.00
+
+  SK-2661-Tarif-UKT-2025-2026.md
+    faithfulness: 0.50 | context_precision: 0.42 | context_recall: 0.50
+
+  SK-2662-Tarif-IPI-2025-2026.md
+    faithfulness: 1.00 | context_precision: 0.76 | context_recall: 1.00
+
+  Peraturan-Rektor-No-1-Tahun-2024-Seleksi-Mandiri.md
+    faithfulness: 0.75 | context_precision: 0.67 | context_recall: 1.00
+
+  Keputusan-Rektor-No-359-Tata-Pergaulan-Warga.md
+    faithfulness: 0.73 | context_precision: 0.31 | context_recall: 0.00
+
+  SOP-BAK-UNILA.md
+    faithfulness: 1.00 | context_precision: 0.97 | context_recall: 1.00
+
+  Panduan-Penulisan-Karya-Ilmiah-2020.pdf
+    faithfulness: 1.00 | context_precision: 0.89 | context_recall: 1.00
+
+  PANDUAN-SIAKAD-MAHASISWA.pdf
+    faithfulness: 0.80 | context_precision: 0.68 | context_recall: 1.00
+
+  kkn_unila.ac.pdf
+    faithfulness: 1.00 | context_precision: 0.65 | context_recall: 1.00
+
+  Peraturan-Rektor-No-23-Tahun-2020-UKT-IPI.md
+    faithfulness: 0.83 | context_precision: 0.67 | context_recall: 0.75
+
+======================================================================

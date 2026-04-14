@@ -1,0 +1,147 @@
+======================================================================
+  UNILA AI — RAGAS Evaluation Report
+  Generated : 2026-04-05 17:58:36
+  Model     : llama-3.1-8b-instant
+  Dataset   : eval_dataset.json  (22 questions)
+======================================================================
+
+📋 PER-QUESTION SCORES
+
+[01] Berapa ukuran kertas standar untuk penulisan karya ilmiah di UNILA?
+     Source : Panduan-Penulisan-Karya-Ilmiah-2020.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.83 ✅ | context_recall: 1.00 ✅
+
+[02] Apa saja jenis dosen yang diakui di UNILA?
+     Source : Peraturan Akademik 2025.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.70 ⚠️ | context_recall: 1.00 ✅
+
+[03] Apa saja subtab yang tersedia di bagian Data Mahasiswa SIAKAD?
+     Source : PANDUAN-SIAKAD-MAHASISWA.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 1.00 ✅
+
+[04] Apa saja fitur yang tersedia di Menu Perkuliahan SIAKAD?
+     Source : PANDUAN-SIAKAD-MAHASISWA.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 1.00 ✅
+
+[05] Bagaimana aturan penulisan judul bab dalam karya ilmiah UNILA?
+     Source : Panduan-Penulisan-Karya-Ilmiah-2020.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 0.33 ❌
+
+[06] Kapan semester ganjil dimulai di UNILA berdasarkan Peraturan Akademik 2025?
+     Source : Peraturan Akademik 2025.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 0.25 ❌
+
+[07] Apa saja bentuk penilaian yang diberikan kepada mahasiswa dalam mata kuliah praktek?
+     Source : SOP-2020.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.00 ❌ | context_recall: nan ❌
+
+[08] Berapa kali pertemuan maksimal dan minimal yang harus dipenuhi dosen dalam satu semester?
+     Source : SOP-2020.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.83 ✅ | context_recall: 1.00 ✅
+
+[09] Siapa yang menjadi koordinator pembuatan SAP?
+     Source : SOP-2020.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.25 ❌ | context_recall: 1.00 ✅
+
+[10] Bagaimana alur pelaksanaan KKN di UNILA?
+     Source : kkn_unila.ac.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 0.75 ⚠️ | context_recall: 1.00 ✅
+
+[11] Berapa berat kertas HVS yang digunakan untuk skripsi dan tesis?
+     Source : Panduan-Penulisan-Karya-Ilmiah-2020.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.83 ✅ | context_recall: 1.00 ✅
+
+[12] Bagaimana cara mendaftar KKN di UNILA?
+     Source : kkn_unila.ac.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.97 ✅ | context_recall: 1.00 ✅
+
+[13] Kapan SAP (Satuan Acara Perkuliahan) harus dibuat menurut SOP UNILA?
+     Source : SOP-2020.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.72 ⚠️ | context_recall: 0.00 ❌
+
+[14] Apa yang disampaikan saat orientasi KKN di UNILA?
+     Source : kkn_unila.ac.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 1.00 ✅
+
+[15] Berapa jumlah semester dalam satu tahun akademik di UNILA?
+     Source : Peraturan Akademik 2025.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.96 ✅ | context_recall: 1.00 ✅
+
+[16] Warna tinta apa yang digunakan untuk tulisan pada sampul skripsi?
+     Source : Panduan-Penulisan-Karya-Ilmiah-2020.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 1.00 ✅
+
+[17] Apa alamat website untuk mengakses SIAKAD UNILA?
+     Source : PANDUAN-SIAKAD-MAHASISWA.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 1.00 ✅
+
+[18] Ada berapa pilihan filter status pada menu Berita di SIAKAD?
+     Source : PANDUAN-SIAKAD-MAHASISWA.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.33 ❌ | context_recall: 1.00 ✅
+
+[19] Apa saja yang dibutuhkan untuk login ke SIAKAD?
+     Source : PANDUAN-SIAKAD-MAHASISWA.pdf
+     Answer : ...
+     Scores : faithfulness: nan ❌ | answer_relevancy: N/A | context_precision: 0.44 ❌ | context_recall: 1.00 ✅
+
+[20] Berapa jam kegiatan untuk 1 SKS praktikum di UNILA?
+     Source : SOP-2020.pdf
+     Answer : ...
+     Scores : faithfulness: 0.83 ✅ | answer_relevancy: N/A | context_precision: 0.73 ⚠️ | context_recall: 1.00 ✅
+
+[21] Berapa ukuran huruf dan font yang digunakan untuk teks isi skripsi?
+     Source : Panduan-Penulisan-Karya-Ilmiah-2020.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 1.00 ✅
+
+[22] Kapan semester genap dimulai di UNILA?
+     Source : Peraturan Akademik 2025.pdf
+     Answer : ...
+     Scores : faithfulness: 1.00 ✅ | answer_relevancy: N/A | context_precision: 1.00 ✅ | context_recall: 1.00 ✅
+
+======================================================================
+📊 AGGREGATE SCORES
+
+  faithfulness        0.9833  [█████████████████████████████░] ✅
+  context_precision   0.7890  [███████████████████████░░░░░░░] ✅
+  context_recall      0.8849  [██████████████████████████░░░░] ✅
+
+  Overall Average     0.8858  ✅
+
+======================================================================
+📁 SCORES BY SOURCE DOCUMENT
+
+  Panduan-Penulisan-Karya-Ilmiah-2020.pdf
+    faithfulness: 1.00 | context_precision: 0.93 | context_recall: 0.87
+
+  Peraturan Akademik 2025.pdf
+    faithfulness: 1.00 | context_precision: 0.92 | context_recall: 0.81
+
+  PANDUAN-SIAKAD-MAHASISWA.pdf
+    faithfulness: 1.00 | context_precision: 0.76 | context_recall: 1.00
+
+  SOP-2020.pdf
+    faithfulness: 0.92 | context_precision: 0.51 | context_recall: 0.75
+
+  kkn_unila.ac.pdf
+    faithfulness: 1.00 | context_precision: 0.91 | context_recall: 1.00
+
+======================================================================

@@ -1,134 +1,142 @@
 [
   {
-    "question": "Berapa ukuran kertas standar untuk penulisan karya ilmiah di UNILA?",
+    "question": "Berapa persentase kehadiran minimal mahasiswa untuk dapat mengikuti Ujian Akhir Semester (UAS) di UNILA?",
+    "ground_truth": "Mahasiswa wajib memenuhi kehadiran minimal 80% dari total pertemuan untuk dapat mengikuti Ujian Akhir Semester (UAS).",
+    "source": "Peraturan-Akademik-Nomor-12-Tahun-2025.md"
+  },
+  {
+    "question": "Berapa IPK minimal yang harus dicapai mahasiswa program Sarjana (S1) untuk dinyatakan lulus di UNILA?",
+    "ground_truth": "Mahasiswa program Sarjana (S1) dinyatakan lulus jika telah menyelesaikan seluruh beban SKS dan memperoleh IPK minimal 2,00.",
+    "source": "Peraturan-Akademik-Nomor-12-Tahun-2025.md"
+  },
+  {
+    "question": "Berapa beban SKS maksimal yang dapat diambil mahasiswa S1 pada semester 1 dan 2 di UNILA?",
+    "ground_truth": "Pada semester 1 dan 2, beban studi maksimal untuk program Sarjana (S1) adalah 20 SKS per semester.",
+    "source": "Peraturan-Akademik-Nomor-12-Tahun-2025.md"
+  },
+  {
+    "question": "Berapa persen keringanan UKT yang diberikan kepada mahasiswa S1 yang telah lulus ujian seminar hasil (seminar II)?",
+    "ground_truth": "Mahasiswa S1 yang telah lulus ujian seminar hasil (seminar II) diberikan keringanan sebesar 25% dari besaran kelompok UKT yang telah ditetapkan. Jika telah lulus ujian akhir (komprehensif) pada semester 7, keringanannya 50%.",
+    "source": "SK-355-Keringanan-Pembebasan-Sanksi-UKT.md"
+  },
+  {
+    "question": "Berapa denda keterlambatan pembayaran UKT per bulan untuk mahasiswa program Sarjana (S1) di UNILA?",
+    "ground_truth": "Denda keterlambatan pembayaran UKT untuk program Sarjana (S1) adalah sebesar Rp150.000,00 (seratus lima puluh ribu rupiah) per bulan keterlambatan, dihitung sejak tanggal 1 bulan berikutnya dari batas akhir jadwal pembayaran UKT.",
+    "source": "SK-355-Keringanan-Pembebasan-Sanksi-UKT.md"
+  },
+  {
+    "question": "Apa sanksi bagi mahasiswa UNILA yang tidak membayar UKT minimal 2 semester berturut-turut tanpa surat keterangan cuti akademik?",
+    "ground_truth": "Mahasiswa yang tidak membayar UKT minimal 2 (dua) semester atau lebih berturut-turut tanpa surat keterangan cuti akademik dikenai sanksi administratif berupa putus studi sebagai mahasiswa Universitas Lampung.",
+    "source": "SK-355-Keringanan-Pembebasan-Sanksi-UKT.md"
+  },
+  {
+    "question": "Berapa besaran UKT kelompok 1 untuk seluruh program studi di Universitas Lampung tahun akademik 2025/2026?",
+    "ground_truth": "UKT Kelompok 1 adalah sebesar Rp500.000 (lima ratus ribu rupiah), berlaku untuk seluruh program studi.",
+    "source": "SK-2661-Tarif-UKT-2025-2026.md"
+  },
+  {
+    "question": "Berapa UKT tertinggi (kelompok 8) untuk program Pendidikan Dokter di Universitas Lampung tahun akademik 2025/2026?",
+    "ground_truth": "UKT kelompok 8 (tertinggi) untuk program Pendidikan Dokter adalah Rp17.050.000 (tujuh belas juta lima puluh ribu rupiah), merupakan UKT maksimum tertinggi di antara seluruh program studi.",
+    "source": "SK-2661-Tarif-UKT-2025-2026.md"
+  },
+  {
+    "question": "Berapa besaran IPI 1 untuk program Pendidikan Dokter (Ilmu Kedokteran) di UNILA tahun akademik 2025/2026?",
+    "ground_truth": "IPI 1 untuk program Pendidikan Dokter (Ilmu Kedokteran) adalah sebesar Rp190.000.000 (seratus sembilan puluh juta rupiah). IPI 2 adalah Rp200.000.000 (dua ratus juta rupiah).",
+    "source": "SK-2662-Tarif-IPI-2025-2026.md"
+  },
+  {
+    "question": "Apa itu IPI dan kapan mahasiswa jalur Seleksi Mandiri UNILA wajib membayarnya?",
+    "ground_truth": "IPI (Iuran Pengembangan Institusi) adalah biaya yang dibebankan kepada mahasiswa yang diterima melalui jalur Seleksi Mandiri, dibayarkan satu kali pada saat registrasi pertama kali dan harus lunas sebelum mengikuti kegiatan orientasi mahasiswa baru. IPI tidak termasuk dalam komponen UKT.",
+    "source": "SK-2662-Tarif-IPI-2025-2026.md"
+  },
+  {
+    "question": "Apa saja jalur Seleksi Mandiri penerimaan mahasiswa baru program Diploma dan Sarjana di UNILA?",
+    "ground_truth": "Seleksi Mandiri di UNILA dilaksanakan melalui 4 jalur: (a) Jalur Seleksi Berbasis Nilai UTBK dan/atau Nilai Rapor; (b) Jalur Seleksi Berbasis Prestasi; (c) Jalur Kerja Sama; (d) Jalur Internasional.",
+    "source": "Peraturan-Rektor-No-1-Tahun-2024-Seleksi-Mandiri.md"
+  },
+  {
+    "question": "Apa yang terjadi jika calon mahasiswa UNILA jalur Seleksi Mandiri tidak membayar IPI dalam batas waktu yang ditetapkan?",
+    "ground_truth": "Calon mahasiswa yang telah diterima melalui Seleksi Mandiri tetapi tidak membayar IPI dalam batas waktu yang ditetapkan dinyatakan mengundurkan diri. IPI yang telah dibayarkan tidak dapat dikembalikan kecuali dalam kondisi tertentu yang ditetapkan Rektor.",
+    "source": "Peraturan-Rektor-No-1-Tahun-2024-Seleksi-Mandiri.md"
+  },
+  {
+    "question": "Apa saja jenis sanksi yang dapat dijatuhkan kepada warga UNILA yang melanggar tata pergaulan kampus?",
+    "ground_truth": "Jenis sanksi terdiri dari tiga tingkat: (1) Sanksi ringan berupa teguran lisan dan/atau teguran tertulis; (2) Sanksi sedang berupa skorsing atau pemberhentian sementara dari kegiatan akademik dan/atau kemahasiswaan; (3) Sanksi berat berupa pemberhentian sebagai mahasiswa/dosen/tenaga kependidikan atau diserahkan kepada pihak berwajib apabila terdapat unsur pidana.",
+    "source": "Keputusan-Rektor-No-359-Tata-Pergaulan-Warga.md"
+  },
+  {
+    "question": "Pelanggaran apa saja yang dapat dikenakan sanksi menurut Keputusan Rektor UNILA No. 359 Tahun 2012 tentang Tata Pergaulan?",
+    "ground_truth": "Pelanggaran yang dikenakan sanksi antara lain: kekerasan fisik atau verbal, pelecehan seksual, tindakan asusila, pengrusakan fasilitas kampus, pencurian, penggunaan atau pengedaran narkoba, membawa senjata tajam/api, perjudian, membawa/mengkonsumsi minuman keras, korupsi/kolusi/nepotisme, plagiarisme dalam karya ilmiah, dan pemalsuan dokumen akademik.",
+    "source": "Keputusan-Rektor-No-359-Tata-Pergaulan-Warga.md"
+  },
+  {
+    "question": "Berapa kali dalam satu semester kegiatan penyusunan Laporan PDDIKTI dilaksanakan di UNILA?",
+    "ground_truth": "Kegiatan penyusunan Laporan Pangkalan Data Pendidikan Tinggi (PDDIKTI) dilaksanakan 2 (dua) kali dalam 1 semester.",
+    "source": "SOP-BAK-UNILA.md"
+  },
+  {
+    "question": "Dokumen apa yang harus dibawa mahasiswa untuk mengajukan perbaikan biodata di SIAKAD melalui Biro Akademik dan Kemahasiswaan (BAK) UNILA?",
+    "ground_truth": "Mahasiswa yang mengajukan perbaikan biodata di SIAKAD melalui BAK perlu menyertakan KTM/KTP/Ijazah terakhir sebagai persyaratan.",
+    "source": "SOP-BAK-UNILA.md"
+  },
+  {
+    "question": "Berapa ukuran kertas yang digunakan untuk penulisan karya ilmiah (skripsi, tesis, disertasi) di Universitas Lampung?",
     "ground_truth": "Kertas berukuran A4 (21 x 29,7 cm).",
-    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf",
-    "prev_score": 0.00
+    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf"
   },
   {
-    "question": "Apa saja jenis dosen yang diakui di UNILA?",
-    "ground_truth": "Dosen terdiri atas dosen tetap, dosen tidak tetap, dan dosen tamu.",
-    "source": "Peraturan Akademik 2025.pdf",
-    "prev_score": 0.19
-  },
-  {
-    "question": "Apa saja subtab yang tersedia di bagian Data Mahasiswa SIAKAD?",
-    "ground_truth": "Subtab yang tersedia di Data Mahasiswa antara lain: Ubah Foto, Tab Informasi Umum, Tab Domisili, Tab Orang Tua, Tab Wali, dan Tab Sekolah.",
-    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf",
-    "prev_score": 0.22
-  },
-  {
-    "question": "Apa saja fitur yang tersedia di Menu Perkuliahan SIAKAD?",
-    "ground_truth": "Menu Perkuliahan digunakan untuk mengelola segala aktivitas perkuliahan seperti melihat kurikulum, melakukan proses KRS, melihat jadwal kuliah, mengisi kuesioner, melihat nilai dan KHS, melihat kemajuan belajar, melihat daftar mata kuliah mengulang, mengajukan berhenti studi, dan melihat status semester.",
-    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf",
-    "prev_score": 0.23
-  },
-  {
-    "question": "Bagaimana aturan penulisan judul bab dalam karya ilmiah UNILA?",
-    "ground_truth": "Judul bab diketik 6 cm dari batas atas kertas, disertai logo UNILA serta tahun pada halaman sampul.",
-    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf",
-    "prev_score": 0.23
-  },
-  {
-    "question": "Kapan semester ganjil dimulai di UNILA berdasarkan Peraturan Akademik 2025?",
-    "ground_truth": "Semester Ganjil dimulai pada bulan Agustus.",
-    "source": "Peraturan Akademik 2025.pdf",
-    "prev_score": 0.30
-  },
-  {
-    "question": "Apa saja bentuk penilaian yang diberikan kepada mahasiswa dalam mata kuliah praktek?",
-    "ground_truth": "Penilaian meliputi Kuis, Ujian Tengah Semester (UTS), dan Ujian Akhir Semester (UAS), yang diberikan kepada mahasiswa paling lambat satu minggu setelah ujian dilaksanakan.",
-    "source": "SOP-2020.pdf",
-    "prev_score": 0.33
-  },
-  {
-    "question": "Berapa kali pertemuan maksimal dan minimal yang harus dipenuhi dosen dalam satu semester?",
-    "ground_truth": "Dosen melaksanakan perkuliahan sesuai dengan jadwal kuliah maksimal 16 kali pertemuan atau minimal 14 kali pertemuan.",
-    "source": "SOP-2020.pdf",
-    "prev_score": 0.50
-  },
-  {
-    "question": "Siapa yang menjadi koordinator pembuatan SAP?",
-    "ground_truth": "Ketua Program Studi membuat surat kepada dosen penanggung jawab untuk membuat SAP.",
-    "source": "SOP-2020.pdf",
-    "prev_score": 0.51
-  },
-  {
-    "question": "Bagaimana alur pelaksanaan KKN di UNILA?",
-    "ground_truth": "Alur pelaksanaan KKN di Sentra KKN UNILA meliputi: Pendaftaran KKN, Pembagian kelompok dan penentuan lokasi, Orientasi KKN, Penyusunan proposal kegiatan KKN, Pelaksanaan kegiatan KKN, Pengawasan dan pembimbingan, Penyusunan laporan akhir KKN, Presentasi dan evaluasi KKN, serta Penutupan dan pemberian sertifikat KKN.",
-    "source": "kkn_unila.ac.pdf",
-    "prev_score": 0.52
-  },
-  {
-    "question": "Berapa berat kertas HVS yang digunakan untuk skripsi dan tesis?",
-    "ground_truth": "Kertas HVS dengan bobot 80 gram digunakan untuk skripsi, tesis, dan disertasi. Kertas HVS dengan bobot 70 gram digunakan untuk laporan kerja mahasiswa.",
-    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf",
-    "prev_score": 0.55
-  },
-  {
-    "question": "Bagaimana cara mendaftar KKN di UNILA?",
-    "ground_truth": "Pendaftaran KKN dilaksanakan secara online melalui portal Sentra KKN bagi mahasiswa yang telah memenuhi syarat.",
-    "source": "kkn_unila.ac.pdf",
-    "prev_score": 0.55
-  },
-  {
-    "question": "Kapan SAP (Satuan Acara Perkuliahan) harus dibuat menurut SOP UNILA?",
-    "ground_truth": "SAP dibuat sebelum perkuliahan dimulai pada setiap awal semester.",
-    "source": "SOP-2020.pdf",
-    "prev_score": 0.57
-  },
-  {
-    "question": "Apa yang disampaikan saat orientasi KKN di UNILA?",
-    "ground_truth": "Sentra KKN UNILA akan memberikan informasi mengenai lokasi KKN, etika penghidupan masyarakat, dan hal-hal terkait pelaksanaan KKN.",
-    "source": "kkn_unila.ac.pdf",
-    "prev_score": 0.69
-  },
-  {
-    "question": "Berapa jumlah semester dalam satu tahun akademik di UNILA?",
-    "ground_truth": "Tahun akademik penyelenggaraan pendidikan UNILA terdiri atas 2 (dua) semester yaitu semester ganjil dan semester genap.",
-    "source": "Peraturan Akademik 2025.pdf",
-    "prev_score": 0.76
-  },
-  {
-    "question": "Warna tinta apa yang digunakan untuk tulisan pada sampul skripsi?",
-    "ground_truth": "Tulisan pada kulit (sampul) baik sampul depan maupun punggung sampul menggunakan tinta berwarna emas.",
-    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf",
-    "prev_score": 0.75
-  },
-  {
-    "question": "Apa alamat website untuk mengakses SIAKAD UNILA?",
-    "ground_truth": "Sistem Informasi Akademik UNILA dapat diakses melalui alamat http://siakadu.unila.ac.id/",
-    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf",
-    "prev_score": 0.75
-  },
-  {
-    "question": "Ada berapa pilihan filter status pada menu Berita di SIAKAD?",
-    "ground_truth": "Terdapat 3 pilihan filter status berita: Aktif (untuk menampilkan berita yang sedang aktif), Prioritas (untuk menampilkan berita yang memiliki prioritas tinggi atau penting), dan Aktif dan Prioritas.",
-    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf",
-    "prev_score": 0.75
-  },
-  {
-    "question": "Apa saja yang dibutuhkan untuk login ke SIAKAD?",
-    "ground_truth": "Untuk melakukan login, masukkan Akun Pengguna dan Kata Sandi pengguna.",
-    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf",
-    "prev_score": 0.80
-  },
-  {
-    "question": "Berapa jam kegiatan untuk 1 SKS praktikum di UNILA?",
-    "ground_truth": "Satu SKS praktikum adalah kegiatan belajar di dalam dan di luar laboratorium sebanyak 2 jam per minggu selama satu semester, dikuti dengan 1-2 jam kegiatan terstruktur dan 1-2 jam kegiatan mandiri.",
-    "source": "SOP-2020.pdf",
-    "prev_score": 0.85
-  },
-  {
-    "question": "Berapa ukuran huruf dan font yang digunakan untuk teks isi skripsi?",
+    "question": "Berapa ukuran huruf dan jenis font yang digunakan untuk teks isi skripsi di Universitas Lampung?",
     "ground_truth": "Ukuran huruf 12 dengan font Times New Roman.",
-    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf",
-    "prev_score": 0.94
+    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf"
   },
   {
-    "question": "Kapan semester genap dimulai di UNILA?",
-    "ground_truth": "Semester Genap dimulai pada bulan Februari.",
-    "source": "Peraturan Akademik 2025.pdf",
-    "prev_score": 0.99
+    "question": "Warna tinta apa yang digunakan untuk tulisan pada sampul (kulit) skripsi di Universitas Lampung?",
+    "ground_truth": "Tulisan pada kulit (sampul) baik sampul depan maupun punggung sampul menggunakan tinta berwarna emas.",
+    "source": "Panduan-Penulisan-Karya-Ilmiah-2020.pdf"
+  },
+  {
+    "question": "Apa alamat website untuk mengakses SIAKAD Universitas Lampung?",
+    "ground_truth": "Sistem Informasi Akademik Universitas Lampung dapat diakses melalui alamat http://siakadu.unila.ac.id/",
+    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf"
+  },
+  {
+    "question": "Apa saja yang dibutuhkan untuk login ke SIAKAD UNILA?",
+    "ground_truth": "Untuk melakukan login ke SIAKAD, masukkan Akun Pengguna dan Kata Sandi pengguna.",
+    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf"
+  },
+  {
+    "question": "Apa saja fitur yang tersedia di Menu Perkuliahan SIAKAD Universitas Lampung?",
+    "ground_truth": "Menu Perkuliahan digunakan untuk mengelola segala aktivitas perkuliahan seperti melihat kurikulum, melakukan proses KRS, melihat jadwal kuliah, mengisi kuesioner, melihat nilai dan KHS, melihat kemajuan belajar, melihat daftar mata kuliah mengulang, mengajukan berhenti studi, dan melihat status semester.",
+    "source": "PANDUAN-SIAKAD-MAHASISWA.pdf"
+  },
+  {
+    "question": "Bagaimana cara mendaftar KKN di Universitas Lampung?",
+    "ground_truth": "Pendaftaran KKN dilaksanakan secara online melalui portal Sentra KKN bagi mahasiswa yang telah memenuhi syarat.",
+    "source": "kkn_unila.ac.pdf"
+  },
+  {
+    "question": "Apa yang disampaikan saat orientasi KKN di Universitas Lampung?",
+    "ground_truth": "Sentra KKN UNILA akan memberikan informasi mengenai lokasi KKN, etika penghidupan masyarakat, dan hal-hal terkait pelaksanaan KKN.",
+    "source": "kkn_unila.ac.pdf"
+  },
+  {
+    "question": "Menurut Peraturan Rektor UNILA No. 23 Tahun 2020, kepada mahasiswa mana saja IPI dapat dibebankan?",
+    "ground_truth": "Berdasarkan Pasal 12, IPI dapat dipungut dari: (a) Mahasiswa asing; (b) Mahasiswa kelas internasional; (c) Mahasiswa yang melalui jalur kerja sama; dan/atau (d) Mahasiswa yang masuk melalui seleksi mandiri.",
+    "source": "Peraturan-Rektor-No-23-Tahun-2020-UKT-IPI.md"
+  },
+  {
+    "question": "Apa yang dapat diajukan mahasiswa UNILA jika mengalami penurunan kemampuan ekonomi akibat bencana alam menurut Peraturan Rektor No. 23 Tahun 2020?",
+    "ground_truth": "Mahasiswa yang mengalami penurunan kemampuan ekonomi akibat bencana alam dan/atau non-alam dapat mengajukan: (a) pembebasan sementara UKT; (b) pengurangan UKT; (c) perubahan kelompok UKT; atau (d) pembayaran UKT secara mengangsur. Penilaian dilakukan oleh Tim Penilai Besaran UKT (TPBU).",
+    "source": "Peraturan-Rektor-No-23-Tahun-2020-UKT-IPI.md"
+  },
+  {
+    "question": "Berapa jumlah semester dalam satu tahun akademik di Universitas Lampung dan kapan masing-masing dimulai?",
+    "ground_truth": "Tahun akademik terdiri atas 2 (dua) semester: Semester Ganjil dimulai pada bulan Agustus, dan Semester Genap dimulai pada bulan Februari.",
+    "source": "Peraturan-Akademik-Nomor-12-Tahun-2025.md"
+  },
+  {
+    "question": "Berapa SKS maksimal yang dapat diambil mahasiswa pada semester antara di Universitas Lampung?",
+    "ground_truth": "Jumlah SKS pada semester antara paling banyak 9 SKS.",
+    "source": "Peraturan-Akademik-Nomor-12-Tahun-2025.md"
   }
 ]

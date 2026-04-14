@@ -1,112 +1,142 @@
 {
-  "Berapa ukuran kertas standar untuk penulisan karya ilmiah di UNILA?": {
-    "context_precision": 0.8333333332916666,
-    "context_recall": 1.0,
-    "faithfulness": 1.0
-  },
-  "Apa saja jenis dosen yang diakui di UNILA?": {
-    "context_precision": 0.6984126983894179,
-    "context_recall": 1.0,
-    "faithfulness": 1.0
-  },
-  "Apa saja subtab yang tersedia di bagian Data Mahasiswa SIAKAD?": {
-    "context_precision": 0.9999999999,
-    "context_recall": 1.0,
-    "faithfulness": NaN
-  },
-  "Apa saja fitur yang tersedia di Menu Perkuliahan SIAKAD?": {
-    "context_precision": 0.9999999999,
-    "context_recall": 1.0,
-    "faithfulness": NaN
-  },
-  "Bagaimana aturan penulisan judul bab dalam karya ilmiah UNILA?": {
-    "context_precision": 0.9999999999,
-    "context_recall": 0.3333333333333333,
-    "faithfulness": 1.0
-  },
-  "Kapan semester ganjil dimulai di UNILA berdasarkan Peraturan Akademik 2025?": {
+  "Berapa persentase kehadiran minimal mahasiswa untuk dapat mengikuti Ujian Akhir Semester (UAS) di UNILA?": {
     "context_precision": 0.99999999995,
-    "context_recall": 0.25,
+    "context_recall": 1.0,
+    "faithfulness": 0.6666666666666666
+  },
+  "Berapa beban SKS maksimal yang dapat diambil mahasiswa S1 pada semester 1 dan 2 di UNILA?": {
+    "context_precision": 0.49999999995,
+    "context_recall": 1.0,
     "faithfulness": 1.0
   },
-  "Apa saja bentuk penilaian yang diberikan kepada mahasiswa dalam mata kuliah praktek?": {
-    "context_precision": 0.0,
-    "context_recall": NaN,
-    "faithfulness": NaN
+  "Berapa persen keringanan UKT yang diberikan kepada mahasiswa S1 yang telah lulus ujian seminar hasil (seminar II)?": {
+    "context_precision": 0.5888888888692593,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
   },
-  "Berapa kali pertemuan maksimal dan minimal yang harus dipenuhi dosen dalam satu semester?": {
+  "Berapa denda keterlambatan pembayaran UKT per bulan untuk mahasiswa program Sarjana (S1) di UNILA?": {
+    "context_precision": 0.46666666665111106,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Apa sanksi bagi mahasiswa UNILA yang tidak membayar UKT minimal 2 semester berturut-turut tanpa surat keterangan cuti akademik?": {
+    "context_precision": 0.7555555555303703,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Berapa UKT tertinggi (kelompok 8) untuk program Pendidikan Dokter di Universitas Lampung tahun akademik 2025/2026?": {
     "context_precision": 0.8333333332916666,
     "context_recall": 1.0,
     "faithfulness": NaN
   },
-  "Siapa yang menjadi koordinator pembuatan SAP?": {
-    "context_precision": 0.249999999975,
+  "Berapa besaran IPI 1 untuk program Pendidikan Dokter (Ilmu Kedokteran) di UNILA tahun akademik 2025/2026?": {
+    "context_precision": 0.5888888888692593,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Apa itu IPI dan kapan mahasiswa jalur Seleksi Mandiri UNILA wajib membayarnya?": {
+    "context_precision": 0.9379251700546282,
     "context_recall": 1.0,
     "faithfulness": 1.0
   },
-  "Bagaimana alur pelaksanaan KKN di UNILA?": {
+  "Apa saja jalur Seleksi Mandiri penerimaan mahasiswa baru program Diploma dan Sarjana di UNILA?": {
+    "context_precision": 0.49999999995,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Apa yang terjadi jika calon mahasiswa UNILA jalur Seleksi Mandiri tidak membayar IPI dalam batas waktu yang ditetapkan?": {
+    "context_precision": 0.8333333332916666,
+    "context_recall": 1.0,
+    "faithfulness": 0.5
+  },
+  "Berapa kali dalam satu semester kegiatan penyusunan Laporan PDDIKTI dilaksanakan di UNILA?": {
+    "context_precision": 0.94999999997625,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Dokumen apa yang harus dibawa mahasiswa untuk mengajukan perbaikan biodata di SIAKAD melalui Biro Akademik dan Kemahasiswaan (BAK) UNILA?": {
+    "context_precision": 0.99999999995,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Berapa ukuran kertas yang digunakan untuk penulisan karya ilmiah (skripsi, tesis, disertasi) di Universitas Lampung?": {
+    "context_precision": 0.8333333332916666,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Berapa ukuran huruf dan jenis font yang digunakan untuk teks isi skripsi di Universitas Lampung?": {
+    "context_precision": 0.99999999995,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Warna tinta apa yang digunakan untuk tulisan pada sampul (kulit) skripsi di Universitas Lampung?": {
+    "context_precision": 0.8333333332916666,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Apa alamat website untuk mengakses SIAKAD Universitas Lampung?": {
+    "context_precision": 0.5833333333041666,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Apa saja yang dibutuhkan untuk login ke SIAKAD UNILA?": {
+    "context_precision": 0.46666666665111106,
+    "context_recall": 1.0,
+    "faithfulness": 0.6
+  },
+  "Apa saja fitur yang tersedia di Menu Perkuliahan SIAKAD Universitas Lampung?": {
+    "context_precision": 0.9999999999,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Bagaimana cara mendaftar KKN di Universitas Lampung?": {
+    "context_precision": 0.42063492062089947,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Apa yang disampaikan saat orientasi KKN di Universitas Lampung?": {
+    "context_precision": 0.8874999999778125,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Menurut Peraturan Rektor UNILA No. 23 Tahun 2020, kepada mahasiswa mana saja IPI dapat dibebankan?": {
+    "context_precision": 0.49999999995,
+    "context_recall": 1.0,
+    "faithfulness": NaN
+  },
+  "Apa yang dapat diajukan mahasiswa UNILA jika mengalami penurunan kemampuan ekonomi akibat bencana alam menurut Peraturan Rektor No. 23 Tahun 2020?": {
+    "context_precision": 0.8303571428363838,
+    "context_recall": 0.5,
+    "faithfulness": 0.8333333333333334
+  },
+  "Berapa IPK minimal yang harus dicapai mahasiswa program Sarjana (S1) untuk dinyatakan lulus di UNILA?": {
+    "context_precision": 0.33333333331666665,
+    "context_recall": 1.0,
+    "faithfulness": 1.0
+  },
+  "Berapa besaran UKT kelompok 1 untuk seluruh program studi di Universitas Lampung tahun akademik 2025/2026?": {
+    "context_precision": 0.3333333333,
+    "context_recall": 1.0,
+    "faithfulness": 0.5
+  },
+  "Berapa jumlah semester dalam satu tahun akademik di Universitas Lampung dan kapan masing-masing dimulai?": {
     "context_precision": 0.7499999999625,
     "context_recall": 1.0,
     "faithfulness": 1.0
   },
-  "Berapa berat kertas HVS yang digunakan untuk skripsi dan tesis?": {
-    "context_precision": 0.8333333332916666,
+  "Berapa SKS maksimal yang dapat diambil mahasiswa pada semester antara di Universitas Lampung?": {
+    "context_precision": 0.49999999995,
     "context_recall": 1.0,
-    "faithfulness": NaN
+    "faithfulness": 0.6666666666666666
   },
-  "Bagaimana cara mendaftar KKN di UNILA?": {
-    "context_precision": 0.9666666666473333,
-    "context_recall": 1.0,
-    "faithfulness": NaN
-  },
-  "Kapan SAP (Satuan Acara Perkuliahan) harus dibuat menurut SOP UNILA?": {
-    "context_precision": 0.7222222221981481,
+  "Apa saja jenis sanksi yang dapat dijatuhkan kepada warga UNILA yang melanggar tata pergaulan kampus?": {
+    "context_precision": 0.0,
     "context_recall": 0.0,
-    "faithfulness": NaN
+    "faithfulness": 0.4
   },
-  "Apa yang disampaikan saat orientasi KKN di UNILA?": {
+  "Pelanggaran apa saja yang dapat dikenakan sanksi menurut Keputusan Rektor UNILA No. 359 Tahun 2012 tentang Tata Pergaulan?": {
     "context_precision": 0.9999999999,
-    "context_recall": 1.0,
-    "faithfulness": NaN
-  },
-  "Berapa jumlah semester dalam satu tahun akademik di UNILA?": {
-    "context_precision": 0.9617346938638119,
-    "context_recall": 1.0,
-    "faithfulness": NaN
-  },
-  "Warna tinta apa yang digunakan untuk tulisan pada sampul skripsi?": {
-    "context_precision": 0.99999999995,
-    "context_recall": 1.0,
-    "faithfulness": NaN
-  },
-  "Apa alamat website untuk mengakses SIAKAD UNILA?": {
-    "context_precision": 0.99999999995,
-    "context_recall": 1.0,
-    "faithfulness": 1.0
-  },
-  "Ada berapa pilihan filter status pada menu Berita di SIAKAD?": {
-    "context_precision": 0.3333333333,
-    "context_recall": 1.0,
-    "faithfulness": NaN
-  },
-  "Apa saja yang dibutuhkan untuk login ke SIAKAD?": {
-    "context_precision": 0.4444444444296296,
-    "context_recall": 1.0,
-    "faithfulness": NaN
-  },
-  "Berapa jam kegiatan untuk 1 SKS praktikum di UNILA?": {
-    "context_precision": 0.7321428571245535,
-    "context_recall": 1.0,
-    "faithfulness": 0.8333333333333334
-  },
-  "Berapa ukuran huruf dan font yang digunakan untuk teks isi skripsi?": {
-    "context_precision": 0.99999999995,
-    "context_recall": 1.0,
-    "faithfulness": 1.0
-  },
-  "Kapan semester genap dimulai di UNILA?": {
-    "context_precision": 0.9999999999833333,
-    "context_recall": 1.0,
+    "context_recall": 0.3333333333333333,
     "faithfulness": 1.0
   }
 }

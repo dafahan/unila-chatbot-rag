@@ -33,6 +33,12 @@ func main() {
 			log.Fatalf("gemini adapter: %v", err)
 		}
 		llm = g
+	case "groq":
+		g, err := adapter.NewGroqAdapter(context.Background(), cfg.GroqAPIKey, cfg.GroqModel, cfg.OllamaBaseURL, cfg.OllamaEmbedModel)
+		if err != nil {
+			log.Fatalf("groq adapter: %v", err)
+		}
+		llm = g
 	default: // "ollama"
 		o, err := adapter.NewOllamaAdapter(cfg.OllamaBaseURL, cfg.OllamaModel, cfg.OllamaEmbedModel)
 		if err != nil {

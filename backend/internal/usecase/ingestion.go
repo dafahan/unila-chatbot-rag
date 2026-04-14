@@ -108,6 +108,9 @@ func (uc *IngestionUseCase) IngestPages(ctx context.Context, filename string, pa
 		return 0, err
 	}
 
+	if len(chunks) == 0 {
+		return 0, fmt.Errorf("no text extracted from PDF — file may be scanned/image-only; upload as .md instead")
+	}
 	if err := uc.repo.SaveChunks(chunks); err != nil {
 		return 0, fmt.Errorf("save chunks: %w", err)
 	}
@@ -115,12 +118,19 @@ func (uc *IngestionUseCase) IngestPages(ctx context.Context, filename string, pa
 }
 
 // IngestText splits text into chunks, computes dense + BM25 sparse vectors, and saves to Qdrant.
+// For markdown files it uses contextual chunking that prepends the nearest section heading to each
+// chunk, which significantly improves retrieval accuracy for structured academic documents.
 func (uc *IngestionUseCase) IngestText(ctx context.Context, filename, text string) (int, error) {
 	if err := uc.ensureCollection(ctx); err != nil {
 		return 0, err
 	}
 
-	rawChunks := deduplicateChunks(splitIntoChunks(cleanText(text), uc.cfg.ChunkSize, uc.cfg.ChunkOverlap))
+	var rawChunks []string
+	if isMarkdown(text) {
+		rawChunks = deduplicateChunks(splitMarkdownWithContext(cleanText(text), uc.cfg.ChunkSize, uc.cfg.ChunkOverlap))
+	} else {
+		rawChunks = deduplicateChunks(splitIntoChunks(cleanText(text), uc.cfg.ChunkSize, uc.cfg.ChunkOverlap))
+	}
 	docID := uuid.New().String()
 
 	// Update BM25 corpus statistics from this batch of chunks before computing vectors,
@@ -270,6 +280,83 @@ func cleanText(text string) string {
 		}
 	}
 	return strings.Join(lines, "\n")
+}
+
+// isMarkdown returns true if the text looks like a markdown document
+// (has at least two lines starting with a `#` heading marker).
+func isMarkdown(text string) bool {
+	count := 0
+	for _, line := range strings.SplitN(text, "\n", 200) {
+		if strings.HasPrefix(strings.TrimSpace(line), "#") {
+			count++
+			if count >= 2 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// splitMarkdownWithContext splits a markdown document into chunks while
+// prepending the most recent section heading hierarchy to each chunk.
+// This ensures every chunk is self-contained for retrieval purposes.
+func splitMarkdownWithContext(text string, size, overlap int) []string {
+	lines := strings.Split(text, "\n")
+	var result []string
+
+	// headings[0]=h1, headings[1]=h2, headings[2]=h3
+	headings := make([]string, 0, 3)
+	var buf strings.Builder
+
+	flush := func() {
+		body := strings.TrimSpace(buf.String())
+		if body == "" {
+			return
+		}
+		prefix := strings.Join(headings, " > ")
+		var full string
+		if prefix != "" {
+			full = prefix + "\n\n" + body
+		} else {
+			full = body
+		}
+		// If the full section fits within 2× chunk size, keep it as one chunk
+		// so that key facts (e.g. a tariff table) are never split from their heading.
+		if len(full) <= size*2 {
+			result = append(result, full)
+		} else {
+			result = append(result, splitIntoChunks(full, size, overlap)...)
+		}
+		buf.Reset()
+	}
+
+	headingLevel := func(line string) (int, string) {
+		trimmed := strings.TrimSpace(line)
+		for lvl := 1; lvl <= 4; lvl++ {
+			prefix := strings.Repeat("#", lvl) + " "
+			if strings.HasPrefix(trimmed, prefix) {
+				return lvl, strings.TrimPrefix(trimmed, prefix)
+			}
+		}
+		return 0, ""
+	}
+
+	for _, line := range lines {
+		lvl, title := headingLevel(line)
+		if lvl > 0 && lvl <= 3 {
+			flush()
+			// Trim headings slice to parent level and append new heading
+			if lvl-1 < len(headings) {
+				headings = headings[:lvl-1]
+			}
+			headings = append(headings, title)
+		} else {
+			buf.WriteString(line)
+			buf.WriteByte('\n')
+		}
+	}
+	flush()
+	return result
 }
 
 // splitIntoChunks splits text by words into chunks of roughly `size` chars
