@@ -2,3 +2,4 @@
 .claude
 uploads
 backend/tmp
+.venv  

@@ -28,6 +28,58 @@ Built with Go, SvelteKit, Qdrant, and Ollama (Llama 3 8B). Supports bilingual re
 | LLM (fallback) | Google Gemini API |
 | Embedding | bge-m3 (1024-dim, multilingual) |
 
+## System Architecture
+
+### RAG Pipeline
+
+```
+User Query
+    │
+    ├─ [EN query?] → Translate to Indonesian (Llama 3, silent)
+    │
+    ├─ Query Rewriting → document-style keywords
+    │
+    ├─ Embed (dense vector) + BM25 (sparse vector)
+    │
+    ├─ Qdrant Hybrid Search (RRF fusion, score threshold 0.02)
+    │
+    ├─ Out-of-Domain Guardrail
+    │     ├─ Layer 1: score threshold filters low-similarity chunks
+    │     └─ Layer 2: LLM relevance judge (YA/TIDAK)
+    │
+    ├─ [Relevant] → inject context into prompt
+    └─ [Not relevant] → fallback mode (no context injected)
+            │
+            └─ LLM generates answer (original language)
+```
+
+### Knowledge Base
+
+| Document | Chunks |
+|---|---|
+| Panduan Penulisan Karya Ilmiah 2020 | 332 |
+| Peraturan Akademik No. 12 Tahun 2025 | 222 |
+| SOP BAK UNILA | 206 |
+| Panduan SIAKAD Mahasiswa | 67 |
+| Tata Pergaulan Warga (SK 359) | 46 |
+| SK 355 Keringanan UKT | 45 |
+| KKN UNILA | 42 |
+| Seleksi Mandiri 2024 (Perrek No. 1) | 38 |
+| UKT & IPI 2020 (Perrek No. 23) | 36 |
+| Tarif UKT 2025–2026 | 31 |
+| Tarif IPI 2025–2026 | 25 |
+| **Total** | **1.090** |
+
+### Multilingual Mechanism
+
+English queries are silently translated to Indonesian before retrieval so BM25 (trained on Indonesian corpus via Sastrawi stemmer) remains accurate. The original English query is still used in the final prompt so the LLM answers in the user's language.
+
+### Out-of-Domain Guardrail
+
+Two-layer approach to prevent hallucination on off-topic questions:
+1. **Score threshold** — Qdrant only returns chunks above a minimum similarity score
+2. **LLM relevance judge** — before generation, the LLM evaluates whether retrieved chunks actually relate to the query; if not, context is withheld and the model falls back to a constrained response
+
 ## Prerequisites
 
 - [Go](https://go.dev/) 1.22+
